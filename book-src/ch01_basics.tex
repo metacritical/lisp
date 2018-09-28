@@ -1,1665 +1,1665 @@
-% -*- coding: utf-8 -*-
-\chapter{Основы интерпретации}\label{chapter:basics}
+% - * - coding: utf-8 - * -
+\ chapter {Basics of Interpretation} \ label {chapter: basics}
 
-\initial{0.75ex}{0.0ex}{В}{\kern1ex этой главе} описывается базовый интерпретатор, идеи
-которого проходят красной нитью через большую часть этой книги. Он намеренно
-сделан простым и более близким к~Scheme, чем к~Лиспу; это позволит нам
-в~дальнейшем описывать Лисп в~терминах Scheme. Мы коснёмся следующих тем в~этой
-вводной главе: сути интерпретации; известной пары функций \ic{eval} и
-\ic{apply}; ожидаемых свойств окружений и функций. Короче говоря, мы начнём
-рассматривать здесь то, что будем изучать подробнее в~следующих главах, надеясь,
-что вас не~отпугнёт пропасть незнания по обе стороны моста, которым мы пойдём.
+\ initial {0.75ex} {0.0ex} {In} { \ kern 1ex this chapter} describes a basic interpreter, ideas
+which is a red thread through most of this book. He deliberately
+made simple and closer to ~ Scheme than to Lisp; this will allow us
+in the following, describe Lisp in terms of Scheme. We will touch on the following topics in this
+introductory chapter: the essence of interpretation; known pair of functions \ ic {eval} and
+\ ic {apply}; expected properties of environments and functions. In short, we will begin
+consider here what we will study in more detail in the following chapters, hoping,
+that you will not be frightened away by the abyss of ignorance on both sides of the bridge that we will go.
 
-\bigskip
+\ bigskip
 
-Интерпретатор и его варианты будут написаны на Scheme без использования
-каких"~либо существенных особенностей данного диалекта.
+The interpreter and its variants will be written on Scheme without using
+which "~ or significant features of this dialect.
 
-\begingroup
-\ForLayout{display}{\setlength{\emergencystretch}{3em}}
-В~книгах по Лиспу редко когда отказываются от нарциссического соблазна описать
-Лисп с~помощью Лиспа. Начало традиции положило первое руководство по
-\LISP~1.5 \cite{mae+62}, и впоследствии такой подход широко распространился.
-Вот лишь малая часть существующих примеров: \cite{rib69}, \cite{gre77},
-\cite{que82}, \cite{cay83}, \cite{cha80}, \cite{sj93}, \cite{rey72},
-\cite{gor75}, \cite{ss75}, \cite{all78}, \cite{mcc78b}, \cite{lak80},
-\cite{hen80}, \cite{bm82}, \cite{cli84}, \cite{fw84}, \cite{drs84},
-\cite{as85}, \cite{r3r86}, \cite{mas86}, \cite{dyb87}, \cite{wh89},
-\cite{kes88}, \cite{lf88}, \cite{dil88}, \cite{kam90}.\par\endgroup
+\ begingroup
+\ ForLayout {display} { \ setlength { \ emergencystretch } {3em}}
+In books about Lisp, they rarely give up the narcissistic temptation to describe
+Lisp with the help of Lisp. The beginning of the tradition was laid by the first
+\ LISP ~ 1.5 \ cite {mae + 62}, and subsequently this approach has spread widely.
+Here are just a few of the existing examples: \ cite {rib69}, \ cite {gre77},
+\ cite {que82}, \ cite {cay83}, \ cite {cha80}, \ cite {sj93}, \ cite {rey72},
+\ cite {gor75}, \ cite {ss75}, \ cite {all78}, \ cite {mcc78b}, \ cite {lak80},
+\ cite {hen80}, \ cite {bm82}, \ cite {cli84}, \ cite {fw84}, \ cite {drs84},
+\ cite {as85}, \ cite {r3r86}, \ cite {mas86}, \ cite {dyb87}, \ cite {wh89},
+\ cite {kes88}, \ cite {lf88}, \ cite {dil88}, \ cite {kam90}. \ par \ endgroup
 
-Эти интерпретаторы довольно сильно разнятся, как языками, которые они реализуют
-и используют для реализации, так и, что более важно, целями, которые они
-преследуют. Например, интерпретатор из~\cite{lak80} показывает, как объекты
-и концепции компьютерной графики естественным образом реализуются на Лиспе;
-а~интерпретатор, описываемый в~\cite{bm82}, создан для явного замера сложности
-интерпретируемых программ.
+These interpreters vary quite widely, both with the languages ​​they implement
+and use for implementation, and, more importantly, the goals they
+pursue. For example, the interpreter from ~ \ cite {lak80} shows how objects
+and the concept of computer graphics is naturally implemented in Lisp;
+and ~ the interpreter, described in ~ \ cite {bm82}, was created for an explicit complexity measurement
+interpreted programs.
 
-\indexR{язык!реализации}
-\indexR{язык!реализуемый}
-Язык, \emph{используемый} для реализации, тоже играет немалую роль. Если в~нём
-есть присваивание и доступ к~памяти (\ic{set-car!} и \ic{set-cdr!}), это даёт
-б\'{о}льшую свободу и делает исходный код интерпретатора более компактным. Мы
-получаем возможность описать язык в~терминах, которые близки к~машинным
-инструкциям. И,~как и с~машинными инструкциями, несмотря на то, что такое
-описание может быть непросто составить, не~возникает никаких сомнений в~том, что
-именно делает каждая конкретная строка. Даже если подобное описание занимает
-больше места, чем высокоуровневое, оно даёт более точное понимание смысла
-происходящего при интерпретации "--- для нас важно именно~это.
+\ indexR {implementation language}
+\ indexR {language! realizable}
+The language that \ emph {used} for implementation also plays a significant role. If in ~ it
+there is an assignment and access to ~ memory ( \ ic {set-car!} and \ ic {set-cdr!}), this gives
+b \ ' {o} greater freedom and makes the source code of the interpreter more compact. we
+we get the opportunity to describe the language in terms that are close to machine
+instructions. And, ~ like with machine instructions, despite the fact that such
+description can be difficult to compose, no ~ there is no doubt that ~ that
+exactly what each particular line does. Even if such a description takes
+more space than a high-level one, it gives a more accurate understanding of the meaning
+occurring at the interpretation "--- for us it is important ~ it.
 
-\begin{figure}\centering
-\input{figures/fig1.1}
-\caption{Уровни сложности.}\label{basics/fig:richness-plot}
-\end{figure}
+\ begin {figure} \ centering
+\ input {figures / fig1.1}
+\ caption {Difficulty levels.} \ label {basics / fig: richness-plot}
+\ end {figure}
 
-На~рисунке~\ref{basics/fig:richness-plot} показано сравнение уровней сложности
-определяющего (по~оси~$x$) и определяемого (по~оси~$y$) языков для некоторых из
-интерпретаторов. Здесь хорошо виден ход развития наших знаний со~временем: всё
-более сложные проблемы решаются с~использованием всё более ограниченных
-возможностей. Эта книга соответствует вектору, который начинается использованием
-высокоуровневого Лиспа для реализации Scheme, а заканчивается реализацией
-высокоуровневого Лиспа с~помощью одного лишь $\lambda$"=исчисления.
-
-
-\section{Вычисления}\label{basics/sect:evaluation}
-
-\indexC{eval}
-\indexR{вычислитель}
-Важнейшая часть интерпретатора Лиспа находится в~одной функции, вокруг которой
-крутится все остальное. Эта функция, называемая \ic{eval}, принимает на вход
-программу, а на выходе даёт результат её исполнения. Явное наличие исполнителя
-кода отнюдь не~случайно, а, наоборот, является характерной и намеренно
-реализованной чертой Лиспа.
-
-\indexR{язык!универсальный}
-\indexR{универсальный язык}
-\indexR{машина Тьюринга}\indexR{Тьюринга, машина}
-Язык программирования называется \term{универсальным}, если он не~уступает
-в~выразительных возможностях машине Тьюринга. Так как машина Тьюринга довольно
-примитивна, то несложно разработать язык, который~бы удовлетворял этому условию;
-действительно, сложнее будет придумать язык, который был~бы полезным, но при
-этом не~был~бы полным по~Тьюрингу.
-
-\indexR{тезис Чёрча}\indexR{Чёрча, тезис}
-В~соответствии с~тезисом Чёрча, любая вычислимая функция может быть записана на
-любом тьюринг-полном языке. Интерпретатор Лиспа можно представить как такую
-функцию, которая принимает программы и возвращает результаты их исполнения. Так
-что если такая функция вообще существует, её можно записать на любом
-тьюринг-полном языке. Следовательно, функцию-вычислитель Лиспа \ic{eval} можно
-записать в~частности на том~же самом Лиспе. В~этом нет никаких противоречий,
-точно так~же, к~примеру, можно реализовать Фортран на~Фортране.
-
-Но~что делает Лисп уникальным (и~оправдывает явное описание \ic{eval}), так это
-небольшой размер кода интерпретатора: обычно от~одной до~двадцати страниц
-в~зависимости от детализации.\footnote*{Интерпретатор, описываемый в~этой главе,
-занимает около 150~строк.} Это результат желания сделать язык последовательным,
-с~минимальным количеством исключений из правил, и, что самое главное, с~простым,
-но выразительным синтаксисом.
-
-\indexCS{eval}{свойства}
-Сам факт существования \ic{eval}, а также возможность её описания на Лиспе
-имеют несколько интересных следствий.
-\begin{itemize}
-  \item Можно изучить Лисп или прочитав руководство (в~котором описываются
-        все доступные функции), или изучив собственно функцию~\ic{eval}.
-        Второй подход сложен тем, что надо уже знать Лисп для того, чтобы
-        понять описание \ic{eval}; но ведь знание Лиспа по~идее должно быть
-        \emph{следствием} изучения \ic{eval}, нежели \emph{предпосылкой} для
-        него. На~самом деле, достаточно знать лишь ту часть Лиспа, которая
-        используется для описания \ic{eval}. Кроме того, язык, определяемый
-        одной \ic{eval}, не~является всем Лиспом: он есть лишь сутью языка,
-        в~нём реализованы только специальные формы и немного примитивных
-        функций.
-
-        Тем не~менее, в~возможности изучать язык двумя разными, но всё~же
-        связанными путями лежит несомненный плюс Лиспа.
-
-  \item Тот факт, что \ic{eval} написана на Лиспе, значит также и то, что
-        среда разработки является составной частью языка и не~требует
-        значительных накладных расходов. Под средой разработки понимаются
-        такие вещи как отладчик, трассировщик или возможность обратного
-        хода \cite{lie87}. Практически, реализация таких инструментов "---
-        это лишь доработка \ic{eval}, к~примеру, чтобы она выводила
-        сообщения при вызове функций, приостанавливала вычисления
-        в~интересующих местах и~так~далее.
-
-        Долгое время среда разработки с~такими возможностями была уникальной
-        для Лиспа. Но и сегодня то, что \ic{eval} может быть описана на самом
-        Лиспе, даёт возможность легко экспериментировать с~новыми вариантами
-        реализации вычислений или~отладки.
-
-  \item Наконец, сама по себе \ic{eval} способна быть инструментом
-        программирования. Достаточно спорным инструментом, так как
-        использование \ic{eval} требует присутствия в~памяти целого
-        интерпретатора или компилятора во~время исполнения кода; но ещё
-        более серьёзной проблемой является невозможность применения в~таком
-        случае некоторых оптимизаций. Другими словами, использование
-        \ic{eval} имеет свою цену. В~некоторых случаях её использование
-        полностью оправдано, к~примеру, когда Лисп используется для описания
-        и реализации метаязыков.
-
-        Кроме ощутимой стоимости использования, семантика \ic{eval} часто
-        неоднозначна. Именно поэтому она вообще не~входила в~стандарт до
-        ревизии \RnRS~\cite{cr91b,kcr98}. \seePage[chapter:reflection]
-\end{itemize}
+The figure ~ \ ref {basics / fig: richness-plot} shows a comparison of the difficulty levels
+defining (on the ~ axis ~ $ x $ ) and determined (on the ~ axis ~ $ y $ ) languages ​​for some of
+interpreters. Here the development of our knowledge with time is clearly visible: all
+more complex problems are solved with the use of increasingly limited
+opportunities. This book corresponds to a vector that begins using
+high-level Lisp to implement Scheme, and ends with the implementation
+High-level Lisp with ~ using only $ \ lambda $ "= calculus.
 
 
-\section{Базовый вычислитель}\label{basics/sect:basic-evaluator}
+\ section {Calculations} \ label {basics / sect: evaluation}
 
-\indexR{переменные!свободные}\indexR{переменные!связанные}
-\indexR{свободные переменные}
-\indexR{связывающие формы}\indexR{форма!связывающая}
-\indexR{окружение}
-\indexC{evaluate}
-Будем различать в~программе \term{свободные} и \term{связанные переменные}.
-Переменная свободна, если ни~одна связывающая форма (вроде \ic{let} или
-\ic{lambda}) не~связывает её с~каким-либо значением. В~противном случае она
-называется связанной. Соответственно, свободные переменные могут иметь любое
-значение, и нельзя определённо сказать, какое именно, не~выходя за рамки
-функции. Структура данных, которая связывает переменные с~их значениями,
-называется \term{окружением}. Таким образом, функция \ic{evaluate}\footnote{Как
-вы знаете, <<родная>> функция-вычислитель Scheme называется \ic{eval}. Чтобы их
-не~путать, нашу функцию мы назовём \ic{evaluate}. По тем~же причинам местный
-аналог \ic{apply} будет называться \ic{invoke}. Меньше перекрытий имён "---
-меньше проблем.} имеет два аргумента: программу и окружение, в~котором она
-должна быть исполнена:
+\ indexC {eval}
+\ indexR {calculator}
+The most important part of the Lisp interpreter is in one function, around which
+everything revolves. This function, called \ ic {eval}, takes input
+program, and at the output gives the result of its execution. Explicit presence of the performer
+code is by no means accidental, but, conversely, is characteristic and deliberate
+implemented line of Lisp.
 
-\begin{code:lisp}
-(define (evaluate exp env) ... )
-\end{code:lisp}
+\ indexR {language! universal}
+\ indexR {universal language}
+\ indexR {Turing machine} \ indexR {Turing, machine}
+A programming language is called \ term {universal}, if it is not ~ inferior
+in the expressive possibilities of the Turing machine. Since the Turing machine is quite
+primitive, it is not difficult to develop a language that would satisfy this condition;
+Indeed, it would be more difficult to come up with a language that would be useful, but with
+This would not be complete in Turing.
+
+\ indexR {Thesis of Church} \ indexR {Church, thesis}
+In accordance with Church's thesis, any computable function can be written in
+any turing-complete language. The Lisp interpreter can be represented as such
+a function that accepts programs and returns the results of their execution. So
+that if such a function exists at all, it can be written on any
+tyuring-complete language. Therefore, the Lisp function \ ic {eval} can
+to write down in particular on that same Lisp. There is no contradiction in this,
+exactly so, for example, you can implement Fortran on Fortran.
+
+But ~ what makes Lisp unique (and ~ justifies the explicit description of \ ic {eval}), so this
+small size of interpreter code: usually from ~ one to ~ twenty pages
+depending on the detail. \ footnote * {The interpreter described in this chapter,
+it takes about 150 ~ lines.} This is the result of the desire to make the language consistent,
+with a minimum number of exceptions to the rules, and, most importantly, with a ~ simple,
+but expressive syntax.
+
+\ indexCS {eval} {properties}
+The very existence of \ ic {eval}, as well as the possibility of its description in Lisp
+have several interesting consequences.
+\ begin {itemize}
+  \ item You can learn Lisp or by reading the manual (which describes
+        all available functions), or by studying the actual function ~ \ ic {eval}.
+        The second approach is complicated by the fact that we must already know Lisp in order to
+        understand the description of \ ic {eval}; But in fact Lisp's knowledge of the idea must be
+        \ emph {consequence} of studying \ ic {eval}, rather than \ emph {premise} for
+        him. In fact, it is enough to know only that part of Lisp that
+        is used to describe \ ic {eval}. In addition, the language defined
+        one \ ic {eval}, not ~ is the whole Lisp: it is only the essence of the language,
+        In it only special forms and a few primitive
+        functions.
+
+        All the same, in ~ the opportunity to learn the language by two different, but all the same
+        bound ways is undoubted plus Lisp.
+
+  \ item The fact that \ ic {eval} is written in Lisp, means also that
+        The development environment is an integral part of the language and does not require
+        significant overhead costs. The development environment is understood as
+        such things as a debugger, a tracer, or the ability to reverse
+        course \ cite {lie87}. In practice, the implementation of such tools "---
+        this is just a refinement of \ ic {eval}, for example, that it would output
+        messages when calling functions, pauses the calculations
+        in ~ interesting places and ~ so ~ next.
+
+        For a long time, the development environment with such capabilities was unique
+        for Lisp. But even today, the fact that \ ic {eval} can be described on the very
+        Lisp, makes it easy to experiment with new options
+        implementation of calculations or debugging.
+
+  \ item Finally, \ ic {eval} itself is capable of being an instrument
+        programming. It is quite a controversial tool, because
+        the use of \ ic {eval} requires the presence of an integer
+        interpreter or compiler during the code execution time; but also
+        A more serious problem is the impossibility of using
+        case of some optimizations. In other words, the use of
+        \ ic {eval} has its own price. In some cases, its use
+        is completely justified, for example, when Lisp is used to describe
+        and the implementation of metalanguages.
+
+        In addition to the tangible cost of use, the semantics \ ic {eval} are often
+        is ambiguous. That's why she did not enter ~ the standard before
+        revision \ RnRS ~ \ cite {cr91b, kcr98}. \ seePage [chapter: reflection]
+\ end {itemize}
 
 
-\section{Вычисляем атомы}\label{basics/sect:evaluating-atoms}
+\ section {Base calculator} \ label {basics / sect: basic-evaluator}
 
-Одна из ключевых особенностей Лиспа состоит в~том, что программы записываются
-теми~же конструкциями, что и остальные данные. Но так как любая запись
-подразумевает определённые условности, поговорим о~таких условностях для записи
-программ. Главные соглашения: переменные записываются символами (своими
-именами), а вызовы функций "--- списками, где первый элемент "--- это вызываемая
-функция, а остальные "--- её аргументы.
+\ indexR {variables! free} \ indexR {variables}
+\ indexR {free variables}
+\ indexR {binding forms} \ indexR {form! binding}
+\ indexR {environment}
+\ indexC {evaluate}
+We will distinguish between \ term {free} and \ term {related variables} in the program .
+The variable is free, if there is not a single binding form (like \ ic {let} or
+\ ic {lambda}) does not bind it to any value. In the opposite case, it
+called bound. Accordingly, free variables can be any
+meaning, and one can not definitely say which one, without going beyond
+function. A data structure that associates variables with their values,
+is called \ term {environment}. Thus, the function \ ic {evaluate} \ footnote {How
+you know, the "native" function-calculator Scheme is called \ ic {eval}. To their
+not to be confused, our function will be called \ ic {evaluate}. For the same reasons, the local
+the analog of \ ic {apply} will be called \ ic {invoke}. Less overlapping names "---
+less problems.} has two arguments: the program and the environment in which it is
+must be executed:
 
-\indexR{атом}
-Как и любой другой компилятор, \ic{evaluate} начинает свою работу
-с~синтаксического анализа переданного ей выражения, чтобы выяснить, что именно
-оно означает. В~этом смысле, название раздела не~совсем правильное: мы
-рассматриваем не~буквально вычисление атомов, а интерпретацию программ,
-состоящих из атомов. Сейчас важно отличать саму программу от её представления
-(письмо от листа бумаги, на котором оно написано). Функция~\ic{evaluate}
-работает с~представлением программ, по нему она узнаёт предписываемые программой
-действия и выполняет~их.
+\ begin {code: lisp}
+(define (evaluate exp env) ...)
+\ end {code: lisp}
 
-% \ForLayout{display}
-\begin{minipage}{\textwidth - \parindent}
-\indexC{atom"?}
-\begin{code:lisp}
+
+\ section {Calculating atoms} \ label {basics / sect: evaluating-atoms}
+
+One of the key features of Lisp is that programs are written
+the same constructions as the rest of the data. But since any record
+implies certain conventions, let's talk about such conventions for recording
+programs. Main conventions: variables are written with symbols (their own
+names), and function calls "--- lists where the first element" is the called
+function, and the rest "--- its arguments.
+
+\ indexR {atom}
+Like any other compiler, \ ic {evaluate} starts its work
+with a ~ parsing of the expression passed to it to find out what exactly
+it means. In this sense, the title of the section is not quite right: we
+consider not literally the calculation of atoms, but the interpretation of programs,
+consisting of atoms. Now it is important to distinguish the program from its presentation
+(letter from the sheet of paper on which it is written). The function ~ \ ic {evaluate}
+works with a ~ representation of programs, on it she learns the instructions prescribed by the program
+action and performs ~ them.
+
+% \ ForLayout {display}
+\ begin {minipage} { \ textwidth - \ parindent }
+\ indexC {atom "?}
+\ begin {code: lisp}
 (define (evaluate exp env)
-  (if (atom? exp)   ; \ic{(atom? exp)} {\equals} \ic{(not (pair? exp))}
+  (if (atom? exp); \ ic {(atom? exp)} { \ equals } \ ic {(not (pair? exp))}
       ...
       (case (car exp)
         ...
-        (else ...) ) ) )
-\end{code:lisp}
-\end{minipage}
+        (else ...))))
+\ end {code: lisp}
+\ end {minipage}
 
-Если выражение не~является списком, то это скорее всего символ, или число, или
-какая-нибудь строка. Если это всё~же символ, то он представляет
-\term{переменную}, а её значение хранится в~окружении:
+If the expression is not a ~ list, then it is most likely a character, or a number, or
+some line. If it's all the same symbol, then it represents
+\ term {variable}, and its value is stored in the environment:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (define (evaluate exp env)
   (if (atom? exp)
       (if (symbol? exp) (lookup exp env) exp)
       (case (car exp)
         ...
-        (else ...) ) ) )
-\end{code:lisp}
+        (else ...))))
+\ end {code: lisp}
 
-Функция~\ic{lookup} (которая рассматривается подробнее на
-странице~\pageref{basics/sect:repr-the-env}) знает, как отыскать значение
-переменной в~окружении. Вот её прототип:
+The function ~ \ ic {lookup} (which is considered in more detail on
+page ~ \ pageref {basics / sect: repr-the-env}) knows how to find the value
+variable in the environment. Here is its prototype:
 
-\indexC{lookup}
-\begin{code:lisp}
-(lookup |\ii{переменная}| |\ii{окружение}|) |\is| |\ii{значение}|
-\end{code:lisp}
+\ indexC {lookup}
+\ begin {code: lisp}
+(lookup | \ ii {variable} | | \ ii {environment} |) | \ is | | | \ ii {value} |
+\ end {code: lisp}
 
-\indexR{переменные!связь с~символами}
-\indexR{символы!связь с~переменными}
-Как видим, здесь происходит неявное преобразование символа в~переменную. Если
-быть более дотошным, тогда вместо \ic{(lookup exp env)} надо записать что"~то
-вроде:
+\ indexR {variables, connection with ~ symbols}
+\ indexR {characters! link to ~ variables}
+As you can see, an implicit conversion of a symbol to a variable takes place here. If
+be more meticulous, then instead of \ ic {(lookup exp env)} we need to write that "~
+like:
 
-\begin{code:lisp}
-... (lookup (symbol->variable exp) env) ...
-\end{code:lisp}
+\ begin {code: lisp}
+... (lookup (symbol-> variable exp) env) ...
+\ end {code: lisp}
 
-\indexR{приведение типов}
-\indexR{объекты!второго класса}
-В~таком случае мы явно говорим, что символ~\ic{exp}, чьим значением является имя
-переменной, должен быть превращён в~переменную. Также это подчёркивает тот факт,
-что функция \ic{symbol->variable}\footnote{Лично я не~люблю называть функции
-приведения типов \ic{\ii{x}"~>\ii{y}}, потому что так сложнее понимать цепочки
-преобразований. Запись \ic{(\ii{y}"~>\ii{z}(\ii{x}"~>\ii{y} ...))} не~так
-очевидна, как \ic{(\ii{z}<"~\ii{y}(\ii{y}<"~\ii{x} ...))}. Хотя, с~другой
-стороны, одиночная запись \ic{\ii{z}<"~\ii{y}} не~так легко читается, как
-\ic{\ii{y}"~>\ii{z}}. Приходится выбирать.} вовсе не~переводит \ic{exp} сам
-в~себя; она превращает синтаксическую сущность (символ) в~семантическую
-(переменную). В~действительности, переменные "--- это лишь воображаемые объекты,
-которым язык и программист дали какие"~то имена, и которые ради удобства
-используются в~форме имён. Способ представления имён также выбран из соображений
-удобства, так как Лисп имеет базовый тип символов. В~данном случае
-\ic{symbol->variable} ничего не~делает, хотя на самом деле могла бы применяться
-какая-нибудь другая форма записи имени переменной, например: строка, состоящая
-из знака доллара и имени переменной; в~этом случае, конечно~же,
-\ic{symbol->variable} будет сложнее.
+\ indexR {casting}
+\ indexR {second-class objects}
+In this case, we explicitly say that the symbol ~ \ ic {exp}, whose value is the name
+variable must be turned into a ~ variable. It also emphasizes the fact that,
+that the function \ ic {symbol-> variable} \ footnote {Personally, I do not like to call functions
+type conversions \ ic { \ ii {x} "~> \ ii {y}}, because it's more difficult to understand chains
+transformations. The notation \ ic {( \ ii {y} "~> \ ii {z} ( \ ii {x}" ~> \ ii {y} ...))} is not so
+is obvious, like \ ic {( \ ii {z} <"~ \ ii {y} ( \ ii {y} <" ~ \ ii {x} ...))}. Although, with a different
+hand, a single entry \ ic { \ ii {z} <"~ \ ii {y}} is not as easy to read as
+\ ic { \ ii {y} "~> \ ii {z}} You have to choose.} does not translate \ ic {exp} itself
+in itself; it turns the syntactic entity (symbol) into a ~ semantic
+(variable). In fact, the variables "are only imaginary objects,
+which the language and the programmer gave what "~ that names, and which for the sake of convenience
+are used in the form of names. The method of representing names is also chosen for reasons
+convenience, since Lisp has a basic type of characters. In this case
+\ ic {symbol-> variable} does nothing, although it could actually be applied
+some other form of writing a variable name, for example: a string consisting of
+from the dollar sign and the variable name; in this case, of course, the same,
+\ ic {symbol-> variable} will be more complicated.
 
-Если бы переменные действительно были лишь воображаемыми, то \ic{lookup}
-не~знала~бы как обрабатывать свой первый аргумент, так как она ожидает нечто
-<<материальное>>. Так что нам надо преобразовать переменную в~её программное
-представление, какой-нибудь уникальный ключ, по которому \ic{lookup} сможет
-отыскать переменную в~окружении. Так что ещё точнее было~бы записать:
+If the variables were really only imaginary, then \ ic {lookup}
+I would not know how to handle my first argument, since it expects something
+<< material >>. So we need to convert the variable to its program
+representation, some unique key, by which \ ic {lookup} can
+find the variable in the environment. So it was even more accurate to write down:
 
-\ForLayout{display}{\begingroup
-\lstset{aboveskip=\smallskipamount, belowskip=\smallskipamount}}
+\ ForLayout {display} { \ begingroup
+\ lstset {aboveskip = \ smallskipamount , belowskip = \ smallskipamount }}
 
-\begin{code:lisp}
-... (lookup (variable->key (symbol->variable exp)) env) ...
-\end{code:lisp}
+\ begin {code: lisp}
+... (lookup (variable-> key (symbol-> variable exp)) env) ...
+\ end {code: lisp}
 
-\ForLayout{display}{\endgroup}
+\ ForLayout {display} { \ endgroup }
 
-Однако, врождённая лень лисперов настаивает на использовании символов для
-ключей. Так что \ic{variable"~>key} "--- это лишь обратная функция
-к~\ic{symbol\discretionary{->}{}{->}variable}, и их последовательное применение
-никак не~изменяет~\ic{exp}.
+However, congenital laziness laziness insists on the use of symbols for
+keys. So \ ic {variable "~> key}" is just the inverse function
+to ~ \ ic {symbol \ discretionary {->} {} {->} variable}, and their consistent application
+does not change ~ \ ic {exp} in any way.
 
-\indexR{автоцитирование}\indexR{механизм автоцитирования}
-Если выражение атомарное (то~есть не~является списком) и не~является символом,
-то соблазнительно его считать представлением какой-нибудь константы
-с~соответствующим значением. Такое поведение называется механизмом
-\term{автоцитирования}. Автоцитируемый объект не~требует явного цитирования и
-имеет собственное значение. За примерами можно обратиться к~\cite{cha96}.
+\ indexR {autocycling} \ indexR {autocytotyping mechanism}
+If the expression is atomic (then ~ is not ~ a list) and not ~ is a symbol,
+then it is tempting to consider it a representation of some constant
+with an appropriate value. This behavior is called a mechanism
+\ term {autocasting}. An auto-cited object does not require explicit citation and
+has an eigenvalue. For examples, you can refer to ~ \ cite {cha96}.
 
-Но является~ли такое поведение правильным? Во-первых, не~всегда атомарные
-объекты обозначают сами себя. Например, строка \ic{"a?b:c"} могла~бы означать
-вызов компилятора~Си, затем вызов получившейся программы и подстановку
-возвращаемого ей значения вместо этой строки.
+But is this behavior correct? First, not ~ always atomic
+objects designate themselves. For example, the line \ ic {"a? B: c"} could mean
+call the compiler ~ C, then call the resulting program and substitute
+the value returned to it instead of this line.
 
-С~другими объектами (вроде функций) вообще не~понятно, как именно их
-\emph{вычислять}. К~примеру, ясно, что значением переменной \ic{car} является
-функция, возвращающая левый элемент пары, но что является значением самой
-функции \ii{car}? Чаще всего попытки вычисления значения функции считаются
-ошибочными.
+With other objects (like functions) it is not at all clear how their
+\ emph {compute}. For example, it is clear that the value of the variable \ ic {car} is
+function that returns the left element of the pair, but what is the value of the
+functions \ ii {car}? Most often, attempts to calculate the value of a function are considered
+erroneous.
 
-\indexC{()}\indexR{пустой список, \protect\ic{()}}
-Другой пример проблемного значения "--- пустой список~\ic{()}. Судя по тому, что
-это список, он должен означать вызов функции. Вот только в~нём нет
-ни~аргументов, ни~самой функции. Такая запись в~Scheme запрещена и является
-синтаксической ошибкой.
+\ indexC {()} \ indexR {empty list, \ protect \ ic {()}}
+Another example of a problem value "is an empty list ~ \ ic {()}. Judging by the fact that
+this is a list, it must mean a function call. But only in ~ it is not
+neither arguments, nor the function itself. Such a record in ~ Scheme is forbidden and is
+syntax error.
 
-Поэтому необходимо очень аккуратно анализировать программу и автоцитировать
-только те данные, для которых это явно стоить делать, например: числа, строки
-и~знаки. \seePage[basics/evaluating-forms/ssect:quoting] Так что мы записываем
-следующее:
+Therefore, it is necessary to carefully analyze the program and autocat
+only those data for which it is clearly worth doing, for example: numbers, lines
+and ~ signs. \ seePage [basics / evaluating-forms / ssect: quoting] So we write down
+following:
 
-\ForLayout{display}{\begingroup
-\lstset{aboveskip=\smallskipamount, belowskip=\smallskipamount}}
+\ ForLayout {display} { \ begingroup
+\ lstset {aboveskip = \ smallskipamount , belowskip = \ smallskipamount }}
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (define (evaluate exp env)
   (if (atom? exp)
       (cond ((symbol? exp) (lookup exp env))
             ((or (number? exp) (string? exp) (char? exp)
-                 (boolean? exp) (vector? exp) )
-             exp )
-            (else (wrong "Cannot evaluate" exp)) )
-      ... ) )
-\end{code:lisp}
+                 (boolean? exp) (vector? exp))
+             exp)
+            (else (wrong "Can not evaluate" exp)))
+      ...))
+\ end {code: lisp}
 
-\ForLayout{display}{\endgroup}
+\ ForLayout {display} { \ endgroup }
 
-\indexR{ошибки!варианты обработки}
-\indexC{wrong}
-\phantomlabel{basic/atoms/para:the-first-error}
-В~этом фрагменте кода виден первый случай, когда могут возникнуть ошибки.
-Большая часть лисп-систем имеет свои собственные механизмы обработки
-исключительных ситуаций, которые непросто сделать переносимыми. В~случае ошибки
-мы вызываем \ic{wrong}\footnote{Заметьте, не~<<функцию \ic{wrong}>>. Варианты её
-реализации подробнее рассматриваются в~разделе~\ref{compilation/sect:exception}.}
-и передаём ей первым аргументом строку. В~строке находится текстовое описание
-ошибки, а следующие за ней аргументы несут дополнительную информацию о~том, что
-вызвало проблему. Системы с~зачаточным механизмом обработки ошибок обычно
-в~случае проблем выдают какие"~то непонятные надписи вроде \ic{"Bus error: core
-dumped"} и умирают. Другие останавливают текущие вычисления и возвращаются
-к~диалоговому режиму. А~третьи могут связывать с~вычисляемым выражением
-специальный обработчик исключений, который перехватит брошенный объект,
-описывающий ошибку, и будет уже по нему решать, что делать дальше.
-\seePage[compilation/sect:exception] В~некоторых случаях даже реализуется
-подобие экспертной системы, которая анализирует ошибку, вызвавший её код и
-выдаёт пользователю варианты её исправления. В~общем, сложно сказать однозначно,
-что следует делать в~случае ошибки.
+\ indexR {errors! processing options}
+\ indexC {wrong}
+\ phantomlabel {basic / atoms / para: the-first-error}
+In this fragment of code, the first case is seen when errors can occur.
+Most of the LISP systems have their own processing mechanisms
+Exceptional situations that are not easy to make bearable. In case of error
+we call \ ic {wrong} \ footnote {Notice, not the ~ << function \ ic {wrong} >>. Variants of its
+implementations are discussed in more detail in the ~ \ ref {compilation / sect: exception} section .}
+and pass it to the first argument string. In the ~ line there is a text description
+errors, and the following arguments carry additional information about the fact that
+caused a problem. Systems with a rudimentary error handling mechanism usually
+in the case of problems, they give out some "~ incomprehensible inscriptions like \ ic {" Bus error: core
+dumped "} and die. Others stop current calculations and return
+to the ~ dialog mode. A ~ third can be associated with a ~ calculated expression
+A special exception handler that will intercept the abandoned object,
+describing the error, and will already decide on it what to do next.
+\ seePage [compilation / sect: exception] In some cases, even implemented
+a semblance of an expert system that analyzes the error that caused its code and
+gives the user options for correcting it. In general, it is difficult to say unequivocally,
+what to do in case of error.
 
 
-\section{Вычисляем формы}\label{basics/sect:evaluating-forms}
+\ section {Compute forms} \ label {basics / sect: evaluating-forms}
 
-\indexR{специальные формы}
-\indexR{форма!специальная}
-\indexR{Лисп!специальные формы}
-Каждый язык имеет некоторое количество <<неприкасаемых>> синтаксических
-конструкций: их нельзя адекватно переопределить и вообще не~стоит трогать.
-В~Лиспе такие конструкции называются \term{специальными формами}. Они
-представляются списками, где первый элемент "--- это определённый символ,
-принадлежащий множеству \term{специальных операторов} (или синтаксических
-ключевых слов, как их называют в~Scheme).
+\ indexR {special forms}
+\ indexR {form! special}
+\ indexR {Lisp! Special Forms}
+Each language has a number of "untouchable" syntactic
+constructions: they can not be adequately redefined and generally should not be touched.
+In Lisp, such constructions are called \ term {special forms}. They
+are represented by lists where the first element "is a certain symbol,
+belonging to the set of \ term {special operators} (or syntactic
+keywords, as they are called in ~ Scheme).
 
-\indexR{функции!примитивы}
-\indexR{примитивы}
-\indexR{диалекты Лиспа}
-Конкретный диалект Лиспа характеризуется набором специальных форм и библиотекой
-примитивных функций (эти функции нельзя определить на самом диалекте, так как
-они тесно связаны с~реализацией; например, для Scheme это~\ic{call/cc}).
+\ indexR {functions! primitives}
+\ indexR {primitives}
+\ indexR {Lisp dialects}
+The specific Lisp dialect is characterized by a set of special forms and a library
+primitive functions (these functions can not be defined in the dialect itself, since
+they are closely related to the implementation; for example, for Scheme this is ~ \ ic {call / cc}).
 
-В~некотором понимании, Лисп является лишь прикладным $\lambda$"=исчислением
-вместе с~расширяющим его набором специальных форм. Специфика каждого конкретного
-диалекта Лиспа лежит только в~этом наборе. В~Scheme используется минимальный
-набор специальных операторов (\ic{quote}, \ic{if}, \ic{set!} и~\ic{lambda}),
-тогда как {\CommonLisp} (CLtL2~\cite{ste90}) определяет более тридцати, описывая
-таким образом случаи, когда может быть сгенерирован высокоэффективный машинный
-код.
+In some sense, Lisp is only an applied $ \ lambda $ "= calculus
+together with an expanding set of special forms. Specificity of each specific
+the Lisp dialect lies only in this set. The ~ Scheme uses a minimum
+a set of special operators ( \ ic {quote}, \ ic {if}, \ ic {set!} and ~ \ ic {lambda}),
+whereas { \ CommonLisp } (CLtL2 ~ \ cite {ste90}) defines more than thirty, describing
+thus, cases where a highly efficient machine can be generated
+code.
 
-Так как специальные формы записываются буквально, то их синтаксический анализ
-прост, хватит одного \ic{case}-выражения: надо лишь смотреть на первый элемент
-списка. Если форма начинается не~со специального оператора, то она означает
-применение функции. В~данный момент мы ограничимся лишь небольшим подмножеством
-специальных форм: \ic{quote}, \ic{if}, \ic{begin}, \ic{set!} и \ic{lambda}.
-(В~следующих главах мы введём другие, более специализированные формы.)
+Since special forms are written literally, their parsing
+simple, one \ ic {case} expression suffices: you just have to look at the first element
+list. If the form does not begin with a special operator, it means
+application function. At the moment, we confine ourselves to a small subset
+special forms: \ ic {quote}, \ ic {if}, \ ic {begin}, \ ic {set!} and \ ic {lambda}.
+(In the following chapters we introduce other, more specialized forms.)
 
-\ForLayout{display}{\begingroup
-\lstset{aboveskip=\smallskipamount, belowskip=\smallskipamount}}
+\ ForLayout {display} { \ begingroup
+\ lstset {aboveskip = \ smallskipamount , belowskip = \ smallskipamount }}
 
-\indexC{evaluate}
-\begin{code:lisp}
+\ indexC {evaluate}
+\ begin {code: lisp}
 (define (evaluate e env)
   (if (atom? e)
       (cond ((symbol? e) (lookup e env))
-            ((or (number? e)(string? e)(char? e)
-                 (boolean? e)(vector? e) ) e)
-            (else (wrong "Cannot evaluate" e)) )
+            ((or (number? e) (string? e) (char? e)
+                 (boolean? e) (vector? e)) e)
+            (else (wrong "Can not evaluate"))))
       (case (car e)
-        ((quote)  (cadr e))
-        ((if)     (if (evaluate (cadr e) env)
+        ((quote) (cadr e))
+        ((if) (if (evaluate (cadr e) env)
                       (evaluate (caddr e) env)
-                      (evaluate (cadddr e) env) ))
-        ((begin)  (eprogn (cdr e) env))
-        ((set!)   (update! (cadr e) env (evaluate (caddr e) env)))
+                      (evaluate (cadddr e) env)))
+        ((begin) (eprogn (cdr e) env))
+        ((set!) (update! (cadr e) env (evaluate (caddr e) env)))
         ((lambda) (make-function (cadr e) (cddr e) env))
-        (else     (invoke (evaluate (car e) env)
-                          (evlis (cdr e) env) )) ) ) )
-\end{code:lisp}
+        (else (invoke (evaluate (car e) env)
+                          (evlis (cdr e) env))))))
+\ end {code: lisp}
 
-\ForLayout{display}{\endgroup}
+\ ForLayout {display} { \ endgroup }
 
-\indexR{синтаксис!if@\protect\ic{if}}
-Чтобы упростить определение, синтаксический анализ оставлен минимальным: мы
-не~проверяем, правильно~ли записаны цитаты, действительно~ли \ic{if} передано
-три аргумента\footnote{\ic{if} не~обязательно принимает условие и ровно две
-альтернативы. К~примеру, в~Scheme и {\CommonLisp} \ic{if} может принимать как
-два, так и три аргумента; \ic{if} в~{\EuLisp} и {\ISLisp} исключительно
-тернарный; {\LeLisp} в~случае, если условие ложно, вычисляет остаток
-формы~\ic{if}, обернув его в~\ic{begin}.} и~так~далее. Мы априори считаем
-интерпретируемые программы синтаксически корректными.
+\ indexR {syntax! if @ \ protect \ ic {if}}
+To simplify the definition, the parsing is left minimal: we
+do not ~ check if the quotes are written correctly, is it really \ ic {if} passed
+three arguments \ footnote { \ ic {if} does not necessarily take a condition and exactly two
+alternatives. For example, in ~ Scheme and { \ CommonLisp } \ ic {if} can take both
+two, and three arguments; \ ic {if} to ~ { \ EuLisp } and { \ ISLisp } only
+ternary; { \ LeLisp } in case the condition is false, calculates the remainder
+form ~ \ ic {if}, wrapping it in ~ \ ic {begin}.} and ~ so ~ next. We consider it a priori
+interpreted programs are syntactically correct.
 
 
-\subsection{Цитирование}\label{basics/evaluating-forms/ssect:quoting}
+\ subsection {Citation} \ label {basics / evaluating-forms / ssect: quoting}
 
-\indexC{quote}
-\indexE{M-выражения}\indexE{S-выражения}
-\indexR{программы!как данные}\indexR{значения!как программы}
-\indexR{цитаты}
-Специальная форма \ic{quote} позволяет записать значение, которое без
-цитирования было бы~спутано с~каким-нибудь выражением. Такой механизм необходим,
-если программы тоже являются типом данных в~языке "--- надо~же как"~то
-различать, где записана программа, а где данные. Если~бы был выбран другой
-синтаксис, то эта проблема~бы не~возникла. К~примеру, изначально в~Лиспе
-планировались M"=выражения \cite{mcc60} для записи действий над данными, а сами
-данные должно были записываться S"=выражениями. Это решило~бы проблему
-разделения кода и данных, но сделало~бы невозможными вменяемые макросы "---
-очень полезную вещь для расширения синтаксиса. Как~бы то ни~было, M"=выражения
-долго не~прожили \cite{mcc78a}, программы и данные стали записываться
-исключительно S"=выражениями. Поэтому в~Лиспе есть специальная форма \ic{quote},
-служащая для разделения кода и данных.
+\ indexC {quote}
+\ indexE {M-Expressions} \ indexE {S-Expressions}
+\ indexR {programs! as data} \ indexR {values! as programs}
+\ indexR {quotes}
+The special form \ ic {quote} allows you to write down a value that, without
+citation would be confused with some kind of expression. Such a mechanism is necessary,
+if the programs are also a data type in ~ the language "--- it is necessary ~ the same as" ~ then
+differentiate where the program is written, and where the data is. If a different
+syntax, then this problem would not have arisen. For example, initially in Lisp
+planned M "= expressions \ cite {mcc60} for writing actions on the data, and themselves
+The data should have been written with S "= expressions." This would solve the problem
+division of the code and data, but it would have made it impossible to make any macros "---
+A very useful thing to extend the syntax. As it were, M "= expressions
+for a long time ~ did not live \ cite {mcc78a}, programs and data began to be recorded
+exclusively S "= expressions. Therefore in Lisp there is a special form \ ic {quote},
+which serves to separate the code and data.
 
-Суть цитирования состоит в~возврате выражения, следующего за ключевым словом,
-<<как~есть>>, без его вычисления. Это чётко видно в~следующем фрагменте кода:
+The essence of quoting is to return the expression following the keyword,
+<< as-is >>, without its calculation. This is clearly visible in the following code snippet:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 ... (case (car e)
-      ((quote) (cadr e)) ... ) ...
-\end{code:lisp}
+      ((quote) (cadr e)) ...) ...
+\ end {code: lisp}
 
-\indexR{цитаты!явные и неявные}
-Также интересен вопрос: а есть~ли разница между явным и неявным цитированием,
-например, между \ic{33} и \ic{'33}, или между\footnote{Напомним: в~Scheme
-запись \ic{\#(...)} означает процитированный вектор.} \ic{\#(fa do sol)} и
-\ic{'\#(fa do sol)}? Если первое сравнение происходит между непосредственными
-значениями и тут вроде~бы всё очевидно, то во~втором случае сравниваются
-составные объекты (хоть для Лиспа они и являются формально атомами). Можно легко
-придумать несколько возможных трактовок данного выражения. Цитирование
-возвращает аргумент как значение, но сама запись \ic{\#(fa do sol)} могла~бы
-возвращать каждый раз новый вектор из трёх символов. Другими словами, \ic{\#(fa
-do sol)} могла~бы быть просто сокращённой записью выражения \ic{(vector 'fa 'do
-'sol)}, которое, конечно~же, будет означать совсем иное, нежели \ic{'\#(fa do
-sol)}, и тем более \ic{(vector fa do sol)}. Мы вернёмся к~этой проблеме позже
-\seePage[assignment/sect:quotation], потому что, как видите, не~так просто
-определиться, какой именно смысл придавать цитированию.
+\ indexR {quotes! explicit and implicit}
+Also interesting is the question: is there a difference between explicit and implicit quoting,
+for example, between \ ic {33} and \ ic {'33}, or between \ footnote {Recall: in ~ Scheme
+the entry \ ic { \ # (...)} stands for the quoted vector.} \ ic { \ # (fa do sol)} and
+\ ic {' \ # (fa do sol)}? If the first comparison occurs between direct
+values, and like everything would be obvious, in the second case they compare
+compound objects (although for Lisp they are formally atoms). It's easy
+come up with several possible interpretations of this expression. Citation
+returns an argument as a value, but the entry \ ic { \ # (fa do sol)} could ~ be
+return each time a new vector of three characters. In other words, \ ic { \ # (fa
+do sol)} could simply be a shortened expression for the expression \ ic {(vector 'fa' do
+'sol)}, which, of course, will mean something completely different than \ ic {' \ # (fa do
+sol)}, and all the more \ ic {(vector fa do sol)}. We will return to this problem later.
+\ seePage [assignment / sect: quotation], because, as you can see, not ~ so simple
+Determine what exactly is the meaning of citing.
 
 
-\subsection{Ветвление}\label{basics/evaluating-forms/ssect:alternatives}
+\ subsection {Branching} \ label {basics / evaluating-forms / ssect: alternatives}
 
-\indexC{if}
-Вспомним, как работает условный оператор \ic{if}: эта форма вычисляет свой
-первый аргумент (\term{условие}), затем в~зависимости от результата вычислений
-выбирает, возвращать значение второго аргумента (\term{следствия}) или третьего
-(\term{альтернативы}). Эта идея выражается следующим кодом:
+\ indexC {if}
+Recall how the conditional operator \ ic {if} works : this form calculates its own
+the first argument ( \ term {condition}), then in ~ depending on the result of the calculations
+selects, returns the value of the second argument ( \ term {effect}) or the third
+( \ term {alternative}). This idea is expressed by the following code:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 ... (case (car e)
       ((if) (if (evaluate (cadr e) env)
                 (evaluate (caddr e) env)
-                (evaluate (cadddr e) env) )) ... ) ...
-\end{code:lisp}
+                (evaluate (cadddr e) env))) ...) ...
+\ end {code: lisp}
 
-\indexR{представление!логических значений}
-\indexR{логические значения}
-Эта программа не~совсем точно учитывает представление логических значений. Явно
-видно, что здесь смешиваются два языка: Scheme (или хотя бы что"~то неотличимо
-похожее на него) и Scheme (или что"~то довольно похожее). Причём мы определяем
-второй в~терминах первого. Так что между ними присутствуют примерно те~же
-отношения, что и между Паскалем (на котором написана первая реализация~\TeX) и
-самой системой~{\TeX} \cite{knu84}. Соответственно, нет ни~единого повода
-считать способы представления логических значений в~этих языках одинаковыми.
+\ indexR {representation of boolean values}
+\ indexR {Boolean values}
+This program does not exactly take into account the representation of logical values. Clearly
+it can be seen that two languages ​​are mixed here: Scheme (or at least that "~ is indistinguishable
+similar to it) and Scheme (or that "~ something pretty similar) .We also define
+second in terms of the first. So between them there are about the same
+relationship, as between Pascal (on which the first implementation is written ~ \ TeX ) and
+by the system itself {{ TeX } \ cite {knu84}. Accordingly, there is no single reason
+To consider ways of representation of logic values ​​in these languages ​​identical.
 
-Функция \ic{evaluate} возвращает значения определяемого языка. Они априори никак
-не~связаны с~логическими значениями языка, используемого для реализации. Следуя
-соглашению о~том, что любой объект, не~равный логической \term{лжи}, должен
-считаться логической \term{истиной}, мы запишем:
+The function \ ic {evaluate} returns the values ​​of the specified language. They a priori no way
+not ~ are associated with the logical values ​​of the language used for implementation. Following
+agreement that ~ any object that is not equal to a logical \ term {lie} must
+be considered logical \ term {truth}, we write:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 ... (case (car e)
-      ((if) (if (not (eq? (evaluate (cadr e) env) the-false-value))
+      ((if (if (not (eq? (evaluate (cadr e) env) the-false-value))
                 (evaluate (caddr e) env)
-                (evaluate (cadddr e) env) )) ... ) ...
-\end{code:lisp}
+                (evaluate (cadddr e) env))) ...) ...
+\ end {code: lisp}
 
-\indexC{the-false-value}
-Здесь считается, что переменная~\ic{the-false-value} хранит значение \term{лжи}
-определяемого языка, выраженное в~терминах определяющего. Вариантов выбора
-такого представления много, например, сделаем так:
+\ indexC {the-false-value}
+Here it is assumed that the variable ~ \ ic {the-false-value} stores the value \ term {lie}
+defined language, expressed in terms of the defining language. Selection options
+There are many such representations, for example, we do this:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (define the-false-value (cons "false" "boolean"))
-\end{code:lisp}
+\ end {code: lisp}
 
-В~этом случае всё будет замечательно, так как \ic{eq?} в~Scheme сравнивает
-не~значения, а адреса, и, соответственно, любое другое значение никак нельзя
-будет спутать со~значением переменной \ic{the-false-value}.
+In this case everything will be fine, because \ ic {eq?} In ~ Scheme compares
+not ~ values, and addresses, and, accordingly, any other value in any way it is impossible
+will be confused with the value of the variable \ ic {the-false-value}.
 
-\indexC{()}\indexC{NIL}\indexR{пустой список, \protect\ic{()}}
-Вопрос представления логических значений вовсе не~тривиален. В~истории Лиспа
-полно споров на тему различий между булевым значением \term{ложь}, пустым
-списком~\ic{()} и символом~\ic{NIL}. Наиболее чёткая позиция по этому вопросу:
-\term{ложь} это не~\ic{()} (в~конце концов, это всего лишь пустой список), и они
-оба тем более не~имеют никакого отношения к~символу, составленному из букв
-\ic{N}, \ic{I} и~\ic{L}.
+\ indexC {()} \ indexC {NIL} \ indexR {empty list, \ protect \ ic {()}}
+The question of representing logical values ​​is not at all trivial. In the history of Lisp
+there is a lot of debate about the difference between the boolean value \ term {false}, empty
+list ~ \ ic {()} and the symbol ~ \ ic {NIL}. The most clear position on this issue:
+\ term {false} is not ~ \ ic {()} (in the end, it's just an empty list), and they
+Both especially do not have anything to do with the character composed of letters
+\ ic {N}, \ ic {I} and ~ \ ic {L}.
 
-Такую позицию занимает и Scheme; об~этом всё~же смогли договориться за пару
-недель до принятия стандарта~IEEE \cite{iee91}.
+Scheme takes this position; About this ~ all the same could agree for a couple
+weeks before the adoption of the standard ~ IEEE \ cite {iee91}.
 
-Так что в~Scheme теперь всё хорошо (разве что \ic{()} по-английски всё ещё
-читается как~\emph{nil}!). В~изначальном Лиспе \term{ложь}, \ic{()} и~\ic{NIL}
-"--- это один и тот~же символ. В~{\LeLisp} \ic{NIL} это переменная со
-значением~\ic{()}, а пустой список (вместе с~пустым символом~\ic{||})
-используется в~качестве~\term{лжи}.
+So in ~ Scheme everything is fine now (except that \ ic {()} in English still
+is read as ~ \ emph {nil}!). In the original Lisp \ term {lie}, \ ic {()} and ~ \ ic {NIL}
+"--- this is the same character.In ~ { \ LeLisp } \ ic {NIL} this is the variable ω
+value ~ \ ic {()}, and an empty list (along with the ~ blank character ~ \ ic {||})
+is used as ~ \ term {lie}.
 
 
-\subsection{Последовательность}\label{basics/evaluating-forms/ssect:sequence}
+\ subsection {Sequence} \ label {basics / evaluating-forms / ssect: sequence}
 
-\indexC{begin}\indexC{progn}
-Существует специальная форма, позволяющая вычислить группу форм последовательно
-и в~определённом порядке. Как и старые~добрые блоки \ic{begin ... end} из
-семейства языков Алгола, в~Scheme эта форма называется \ic{begin}; в~других
-Лиспах она обычно зовётся \ic{progn} "--- обобщенная версия \ic{prog1},
-\ic{prog2} {\itd} Собственно организацию последовательности мы перепоручаем
-функции~\ic{eprogn}.
+\ indexC {begin} \ indexC {progn}
+There is a special form that allows us to calculate a group of forms in series
+and in a certain order. Like the old ~ good blocks \ ic {begin ... end} from
+family of Algol languages, in ~ Scheme this form is called \ ic {begin}; in others
+Lisp is usually called \ ic {progn} "--- the generalized version of \ ic {prog1},
+\ ic {prog2} { \ itd } We organize the organization of the sequence ourselves
+functions ~ \ ic {eprogn}.
 
-\indexC{eprogn}
-\begin{code:lisp}
+\ indexC {eprogn}
+\ begin {code: lisp}
 ... (case (car e)
-      ((begin) (eprogn (cdr e) env)) ... ) ...
+      ((begin) (eprogn (cdr e) env)) ...) ...
 
 (define (eprogn exps env)
   (if (pair? exps)
       (if (pair? (cdr exps))
           (begin (evaluate (car exps) env)
-                 (eprogn (cdr exps) env) )
-          (evaluate (car exps) env) )
-      '() ) )
-\end{code:lisp}
+                 (eprogn (cdr exps) env))
+          (evaluate (car exps) env))
+      '()))
+\ end {code: lisp}
 
-Такое определение последовательных вычислений не~допускает разночтений. Стоит
-обратить внимание на хвостовую рекурсию при вычислении последней формы
-последовательности. Вычисления построены так, что последний вызов \ic{evaluate}
-заменяет собой всю рекурсивную цепочку вызовов \ic{eprogn}. (О~хвостовой
-рекурсии мы позже поговорим подробнее.
-\seePage[escape/pr-cont/ssect:tail-recusion])
+This definition of successive calculations does not allow for discrepancies. It is worth
+Pay attention to the tail recursion when calculating the last form
+sequence. The calculations are constructed so that the last call \ ic {evaluate}
+replaces the entire recursive chain of calls \ ic {eprogn}. (O ~ tail
+We will talk more about recursion later.
+\ seePage [escape / pr-cont / ssect: tail-recusion])
 
-\indexCS{begin}{возвращаемое значение}
-\indexR{возвращаемые значения!формы (begin)@формы \protect\ic{(begin)}}
-\indexC{empty-begin}
-Ещё одним интересным моментом является то, чт\'{о} возвращается при вычислении
-формы \ic{(begin)}. Сейчас это пустой список. Но почему именно \ic{()}, почему
-не~что"~то другое, вроде \ic{:3} или \ic{(\nya)}? Мы выбрали пустой список по
-привычке, доставшейся в~наследство от Лиспа: в~любой непонятной ситуации
-возвращай \ic{nil}. Но в~мире, где \term{ложь}, \ic{nil} и~\ic{()} "--- это
-совершенно различные вещи, что из них лучше подходит на роль \emph{ничего}?
-Поэтому пусть в~нашем языке вычисление \ic{(begin)} будет возвращать специальное
-значение \ic{empty-begin}, которое определяется как (почти) случайное число
-\ic{813}~\cite{leb05}.
+\ indexCS {begin} {return value}
+\ indexR {return values ​​of! form (begin) @ form \ protect \ ic {(begin)}}
+\ indexC {empty-begin}
+Another interesting point is that \ ' {o} is returned when calculating
+form \ ic {(begin)}. Now this is an empty list. But why exactly \ ic {()}, why
+not ~ what ~ something else, like \ ic {: 3} or \ ic {( \ nya )}? We chose an empty list by
+The habit inherited from Lisp: in any incomprehensible situation
+return \ ic {nil}. But in a world where \ term {false}, \ ic {nil} and ~ \ ic {()} "is this
+completely different things, which one is better suited for the role of \ emph {nothing}?
+Therefore, in our language, let the calculation of \ ic {(begin)} return a special
+the value of \ ic {empty-begin}, which is defined as (almost) a random number
+\ ic {813} ~ \ cite {leb05}.
 
-\indexC{eprogn}\indexC{empty-begin}
-\begin{code:lisp}
+\ indexC {eprogn} \ indexC {empty-begin}
+\ begin {code: lisp}
 (define (eprogn exps env)
   (if (pair? exps)
       (if (pair? (cdr exps))
           (begin (evaluate (car exps) env)
-                 (eprogn (cdr exps) env) )
-          (evaluate (car exps) env) )
-      empty-begin ) )
+                 (eprogn (cdr exps) env))
+          (evaluate (car exps) env))
+      empty-begin))
 
 (define empty-begin 813)
-\end{code:lisp}
+\ end {code: lisp}
 
-\indexR{синтаксис!begin@\ic{(begin)}}
-\indexC*{unspecified}{\#<unspecified>}
-Корни нашей проблемы в~том, что \ic{begin} \emph{обязана} вернуть какое"~то
-значение. Как и Scheme, определяемый язык может не~придавать какого-либо смысла
-форме \ic{(begin)}; мы можем или допускать такое написание и возвращать любое
-удобное значение, или~же не~допускать и считать ошибкой. Идеальный вариант:
-вообще не~использовать \ic{begin} без аргументов, так как не~определено, что
-именно получится в~результате. Некоторые реализации имеют специальный объект:
-\ic{\#<unspecified>}, который возвращается в~случае, когда нет ничего более
-подходящего. Обычно единственное, что с~ним можно сделать "--- это вывести на
-печать. (Не~следует путать этот объект с~псевдозначением у~неопределённых
-переменных. \seePage[lisp1-2-omega/recusion/ssect:uninitialized])
+\ indexR {syntax! begin @ \ ic {(begin)}}
+\ indexC * {unspecified} { \ # <unspecified>}
+The root of our problem is that \ ic {begin} \ emph {must} return some "~ then
+value. Like Scheme, a definable language can not ~ impart any meaning
+form \ ic {(begin)}; We can either allow such writing and return any
+a convenient value, or ~ the same does not ~ admit and consider an error. Perfect option:
+generally do not use \ ic {begin} without arguments, since it is not defined that
+it will turn out in the result. Some implementations have a special object:
+\ ic { \ # <<unspecified>}, which is returned in the case where there is nothing more
+suitable. Usually the only thing that can be done with it "is to output this to
+printing. (He ~ it is necessary to confuse this object with a ~ pseudo-value of ~ undefined
+variables. \ seePage [lisp1-2-omega / recusion / ssect: uninitialized])
 
-\bigskip
+\ bigskip
 
-\indexR{язык!чисто функциональный}
-\indexR{побочные эффекты}
-Последовательное вычисление выражений бесполезно в~чисто функциональных языках
-(где функции не~имеют побочных эффектов). Действительно, какой в~таком случае
-смысл что"~то вычислять и не~использовать возвращаемые значения? Но иногда
-в~этом может быть смысл. Представим себе игру, написанную на чисто
-функциональном языке; очевидно, что вычисления занимают какое"~то время
-вне~зависимости от того, используются~ли их результаты или нет; и нас может
-интересовать именно этот <<побочный эффект>> "--- замедление работы, "--- а
-не~получаемые результаты. Тогда можно последовательно что"~то вычислять,
-например, чтобы скорость игры была адекватна рефлексам игрока (если только
-компилятор не~посчитает себя самым умным и не~удалит <<бесполезный>> код).
+\ indexR {language! purely functional}
+\ indexR {side effects}
+Consecutive calculation of expressions is useless in purely functional languages
+(where the functions do not have side effects). Indeed, in what case
+meaning that "~ then calculate and do not ~ use the return values? But sometimes
+in ~ this may be the point. Imagine a game written purely
+functional language; It is obvious that the calculations take some time
+regardless of whether their results are used or not; and we can
+interest is precisely this "side effect >>" --- slowing down the work, "--- a
+not ~ the results obtained. Then we can successively "calculate something,
+for example, that the speed of the game is adequate to the player's reflexes (if only
+the compiler does not ~ consider itself to be the smartest and will not ~ delete the "useless" code).
 
-\indexCS{begin}{необходимость}
-Так как в~Scheme есть операции ввода-вывода, которые имеют побочные эффекты, то
-для нас есть смысл пользоваться формой \ic{begin}, потому как очевидно, что
-лучше сначала задать вопрос (с~помощью \ic{display}), а потом прочитать ответ
-(с~помощью \ic{read}), чем сделать наоборот. Здесь"~то как раз и нужно
-упорядочить вычисления. Но не~только \ic{begin} может их упорядочивать.
-Например, условный оператор может:
+\ indexCS {begin} {need}
+Since there are I / O operations in ~ Scheme that have side effects, then
+for us it makes sense to use the form \ ic {begin}, because it is obvious that
+it is better to first ask the question (with the help of \ ic {display}), and then read the answer
+(with the help of \ ic {read}), than do the reverse. Here "~ that's exactly what you need
+order the calculations. But not only \ ic {begin} can order them.
+For example, a conditional statement can:
 
-\begin{code:lisp}
-(if |$\alpha$| |$\beta$| |$\beta$|) |\eq| (begin |$\alpha$| |$\beta$|)
-\end{code:lisp}
+\ begin {code: lisp}
+(if | $ \ alpha $ | | $ \ beta $ | | $ \ beta $ |) | \ eq | (begin | $ \ alpha $ | | $ \ beta $ |)
+\ end {code: lisp}
 
-\phantomlabel{basics/forms/sequence/par:gensym-puzzle}
-\noindent
-И~\ic{lambda} тоже может\footnote{Переменная \ii{void} не~должна быть свободной
-в~$\beta$. Это условие выполняется, если \ii{void} никогда не~встречается
-в~$\beta$. Обычно в~таком случае используется \ic{gensym}, чтобы получить
-гарантированно уникальное имя переменной. \seeEx[basics/ex:no-gensym]}:
+\ phantomlabel {basics / forms / sequence / par: gensym-puzzle}
+\ noindent
+And ~ \ ic {lambda} can also \ footnote {The variable \ ii {void} should not be ~ free
+in the $ \ beta $ . This condition is met if \ ii {void} never occurs
+in the $ \ beta $ . Usually in this case, \ ic {gensym} is used to get
+guaranteed unique variable name. \ seeEx [basics / ex: no-gensym]}:
 
-\begin{code:lisp}
-(begin |$\alpha$| |$\beta$|) |\eq| ((lambda (|\ii{void}|) |$\beta$|) |$\alpha$|)
-\end{code:lisp}
+\ begin {code: lisp}
+(begin | $ \ alpha $ | | $ \ beta $ |) | \ eq | ((lambda (| \ ii {void} |) | $ \ beta $ |) | $ \ alpha $ |)
+\ end {code: lisp}
 
-Как видно из этого примера, в~Scheme \ic{begin} не~является необходимой
-специальной формой, так как её поведение можно проэмулировать с~помощью
-функций благодаря тому, что при вызове функции её аргументы вычисляются перед
-исполнением тела (передача аргументов \term{по значению}).
+As you can see from this example, in ~ Scheme \ ic {begin} not ~ is necessary
+special form, as its behavior can be emulated with help
+functions by the fact that when a function is called, its arguments are evaluated before
+execution of the body (passing arguments \ term {by value}).
 
 
-\subsection{Присваивание}\label{basics/evaluating-forms/ssect:assignment}
+\ subsection {Assignment} \ label {basics / evaluating-forms / ssect: assignment}
 
-\indexC{set"!}
-\indexR{присваивание}
-\indexR{соглашения именования!побочных эффектов}
-Как и во~многих других языках, в~нашем диалекте значения переменных можно
-менять. Изменение значения переменной называется \term{присваиванием}. Так как
-значение переменной надо изменять в~её окружении, то мы оставляем эту проблему
-функции~\ic{update!}.\footnote*{В~соответствии с~принятым в~Scheme соглашением,
-имена функций с~побочными эффектами оканчиваются на восклицательный знак.} Её
-настоящая суть объясняется позже, на
-странице~\pageref{assignment/implementation/ssect:environment}.
+\ indexC {set "!}
+\ indexR {assignment}
+\ indexR {naming convention! side effects}
+As in many other languages, in our dialect the values ​​of the variables can be
+change. Changing the value of a variable is called \ term {assignment}. As
+the value of the variable must be changed in its environment, then we leave this problem
+function ~ \ ic {update!}. \ footnote * {In accordance with the ~ agreement in ~ Scheme,
+function names with side effects end in an exclamation mark.} Its
+The real essence is explained later, on
+page ~ \ pageref {assignment / implementation / ssect: environment}.
 
-\begin{code:lisp}
+\ begin {code: lisp}
 ... (case (car e)
       ((set!) (update! (cadr e) env
-                       (evaluate (caddr e) env))) ... ) ...
-\end{code:lisp}
+                       (evaluate (caddr e) env))) ...) ...
+\ end {code: lisp}
 
-Присваивание выполняется в~два шага: сначала вычисляется новое значение, потом
-новое значение заменяет старое. Стоит заметить, что обновлённая переменная
-не~является значением данной формы. Мы ещё вернёмся к~вопросу о~возвращаемом
-значении операции присваивания. \seePage[chapter:assignment] Пока только
-запомните, что стандартом оно не~определено.
+Assignment is performed in ~ two steps: first the new value is calculated, then
+The new value replaces the old one. It is worth noting that the updated variable
+not ~ is the value of this form. We will return to the question of return
+value of the assignment operation. \ seePage [chapter: assignment] Currently only
+remember that it is not defined by the standard.
 
 
-\subsection{Абстракция}\label{basics/evaluating-forms/ssect:abstraction}
+\ subsection {Abstraction} \ label {basics / evaluating-forms / ssect: abstraction}
 
-\indexR{абстракция}
-Функции (также называемые \term{процедурами} в~Scheme) являются результатом
-вычисления специальной формы \ic{lambda}, чьё имя ссылается на понятие
-\term{абстракции} в~$\lambda$"=исчислении. Работу по созданию функции мы
-поручаем функции~\ic{make-function}, которой передаём всё необходимое: список
-аргументов, тело функции и текущее окружение.
+\ indexR {abstraction}
+Functions (also called \ term {procedures} in ~ Scheme) are the result
+calculation of the special form \ ic {lambda}, whose name refers to the concept
+\ term {abstraction} in ~ $ \ lambda $ "= calculus.
+we assign functions ~ \ ic {make-function}, to which we pass all necessary: ​​list
+arguments, the function body, and the current environment.
 
-\begin{code:lisp}
+\ begin {code: lisp}
 ... (case (car e)
-      ((lambda) (make-function (cadr e) (cddr e) env)) ... ) ...
-\end{code:lisp}
+      ((lambda) (make-function (cadr e) (cddr e) env)) ...) ...
+\ end {code: lisp}
 
 
-\subsection{Аппликация}\label{basics/evaluating-forms/ssect:application}
+\ subsection {Application} \ label {basics / evaluating-forms / ssect: application}
 
-\indexR{аппликация}
-\indexR{комбинация}
-\indexR{терм!функциональный}
-\indexR{функциональный терм}
-Если первый элемент списка не~является специальным оператором, то такой список
-означает применение функции, которое в~$\lambda$"=исчислении называется
-\term{аппликацией} или \term{комбинацией}. Функция, полученная в~результате
-вычисления первого элемента, применяется к~аргументам, которые мы получим,
-вычислив остальные элементы списка. Эти действия описываются следующим кодом:
+\ indexR {application}
+\ indexR {combination}
+\ indexR {term! function}
+\ indexR {functional term}
+If the first element of the list is not a special operator, then such a list
+means the application of a function that in the $ \ lambda $ "= calculus is called
+\ term {application} or \ term {combination}. The function obtained in the result
+the calculation of the first element, is applied to the arguments that we get,
+calculating the remaining elements of the list. These actions are described by the following code:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 ... (case (car e)
       (else (invoke (evaluate (car e) env)
-                    (evlis (cdr e) env) )) ) ...
-\end{code:lisp}
+                    (evlis (cdr e) env)))) ...
+\ end {code: lisp}
 
-Вспомогательная функция~\ic{evlis} принимает список выражений и возвращает
-список соответствующих им значений. Она определяется следующим образом:
+The helper function ~ \ ic {evlis} takes a list of expressions and returns
+a list of the corresponding values. It is defined as follows:
 
-\indexC{evlis}
-\begin{code:lisp}
+\ indexC {evlis}
+\ begin {code: lisp}
 (define (evlis exps env)
   (if (pair? exps)
       (cons (evaluate (car exps) env)
-            (evlis (cdr exps) env) )
-      '() ) )
-\end{code:lisp}
+            (evlis (cdr exps) env))
+      '()))
+\ end {code: lisp}
 
-Далее работает функция~\ic{invoke}, которая применяет свой первый аргумент
-(функцию; если это не~так, она сообщает об~ошибке) ко~второму (списку её
-аргументов) и возвращает результат вычислений. В~общем, \ic{invoke} похожа на
-привычную \ic{apply}, разве что требует явного указания окружения. (Далее
-в~разделе~\ref{basics/sect:representing-functions}
-\seePage[basics/sect:representing-functions] мы рассмотрим подробнее непростые
-взаимоотношения функций и~окружений.)
+Then the function ~ \ ic {invoke} works , which applies its first argument
+(function; if it is not ~ so, it reports an error) to the second (list of it
+arguments) and returns the result of the calculations. In general, \ ic {invoke} is similar to
+habitual \ ic {apply}, unless it requires an explicit indication of the environment. (Further
+in the ~ section \ ref {basics / sect: representing-functions}
+\ seePage [basics / sect: representing-functions] we will consider in more detail uneasy
+relationships between functions and environments.)
 
 
-\subsubsection{\texorpdfstring{Ещё~немного об~\protect\ic{evaluate}}%
-{Ещё немного об evaluate}}
+\ subsubsection { \ texorpdfstring {More ~ ​​little about ~ \ protect \ ic {evaluate}} %
+{A little more about evaluate}}
 
-\indexR{порядок вычислений!термов аппликации}
-Рассмотренное описание языка является более-менее точным. Мы не~разобрали лишь
-несколько вспомогательных функций: \ic{lookup} и \ic{update!}, отвечающие за
-окружения, и \ic{make-function} вместе с~\ic{invoke}, занимающиеся функциями.
-Но даже сейчас нам уже многое известно об~\ic{evaluate}. Например, наш диалект
-имеет единое пространство имён, понятие объекта в~нём распространяется вообще
-на всё (как в~\Lisp1 \seePage[chapter:lisp1-2-omega]), в~том числе и на функции.
-Но мы до сих пор не~знаем порядок вычисления аргументов.
+\ indexR {order of calculation! of terms of application}
+The described description of the language is more or less precise. We did not disassemble only
+several auxiliary functions: \ ic {lookup} and \ ic {update!}, responsible for
+environment, and \ ic {make-function} along with the \ ic {invoke}, dealing with functions.
+But even now we already know a lot about ~ \ ic {evaluate}. For example, our dialect
+has a single namespace, the concept of an object in it extends in general
+on everything (as in ~ \ Lisp 1 \ seePage [chapter: lisp1-2-omega]), including functions.
+But we still do not know how to calculate the arguments.
 
-В~нашем случае он зависит от порядка вычисления аргументов у~\ic{cons}, которая
-используется в~\ic{evlis}. Но мы легко можем указать любой понравившийся нам
-порядок, например, слева направо:
+In our case, it depends on the order of computing the arguments y ~ \ ic {cons}, which
+is used in ~ \ ic {evlis}. But we can easily indicate any we like
+order, for example, from left to right:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (define (evlis exps env)
   (if (pair? exps)
       (let ((argument1 (evaluate (car exps) env)))
-        (cons argument1 (evlis (cdr exps) env)) )
-      '() ) )
-\end{code:lisp}
+        (cons argument1 (evlis (cdr exps) env)))
+      '()))
+\ end {code: lisp}
 
-Без введения новых специальных конструкций\footnote{Как известно, \ic{let} "---
-это всего лишь простой макрос: \ic{(let (($x$ $\pi_1$)) $\pi_2$)} {\eq}
-\ic{((lambda ($x$) $\pi_2$) $\pi_1$)}.} мы уточнили поведение определяемого
-языка. Первая часть книги направлена именно на это: уточнение определяемого
-языка с~помощью всё более ограниченных возможностей, что снижает зависимость
-описания от языка, используемого для определения.
+Without the introduction of new special constructions \ footnote {As is known, \ ic {let} "---
+it's just a simple macro: \ ic {(let (( $ x $  $ \ pi _ 1 $ )) $ \ pi _ 2 $ )} { \ eq }
+\ ic {((lambda ( $ x $ ) $ \ pi _ 2 $ ) $ \ pi _ 1 $ )}.} we specified the behavior of the
+language. The first part of the book is aimed precisely at this: clarification of the
+language with the help of increasingly limited capabilities, which reduces the dependence
+description of the language used to determine.
 
 
-\section{Представление окружений}\label{basics/sect:repr-the-env}
+\ section {Representing Environments} \ label {basics / sect: repr-the-env}
 
-\indexE{A-список}\indexR{А-список}
-\indexR{ассоциативный список}
-Окружения связывают переменные с~их значениями. Обычно в~Лиспе подобные связи
-представляются \term{ассоциативными списками}, также называемыми
-\term{А-списками}. Мы тоже будем представлять окружения как~А-списки,
-связывающие переменные и значения. Для простоты имена переменных будем
-представлять символами.
+\ indexE {A-list} \ indexR {A-list}
+\ indexR {associative list}
+Environments connect variables with their values. Usually in Lisp such connections
+are represented by \ term {associative lists}, also called
+\ term {A-lists}. We, too, will represent the environment as ~ A-lists,
+binding variables and values. For simplicity, the names of the variables are
+represent by symbols.
 
-Таким образом, функции \ic{lookup} и \ic{update!} определяются элементарно:
+Thus, the functions \ ic {lookup} and \ ic {update!} Are defined elementary:
 
-\ForLayout{display}{\begingroup
-\lstset{aboveskip=\smallskipamount, belowskip=\smallskipamount}}
+\ ForLayout {display} { \ begingroup
+\ lstset {aboveskip = \ smallskipamount , belowskip = \ smallskipamount }}
 
-\indexC{lookup}
-\begin{code:lisp}
+\ indexC {lookup}
+\ begin {code: lisp}
 (define (lookup id env)
   (if (pair? env)
       (if (eq? (caar env) id)
           (cdar env)
-          (lookup id (cdr env)) )
-      (wrong "No such binding" id) ) )
-\end{code:lisp}
+          (lookup id (cdr env)))
+      (wrong "No such binding" id)))
+\ end {code: lisp}
 
-Тут мы видим второй тип\footnote{Первый "--- это синтаксические ошибки
-(стр.~\pageref{basic/atoms/para:the-first-error}).} возможных ошибок,
-появляющихся при попытке узнать значение неизвестной переменной. Мы опять лишь
-вызовем \ic{wrong}, чтобы сообщить о~проблеме наверх.
+Here we see the second type \ footnote {First "--- these are syntax errors
+(page ~ \ pageref {basic / atoms / para: the-first-error}).} Possible errors,
+When you try to find out the value of an unknown variable. We are again only
+call \ ic {wrong} to report the problem to the top.
 
-\indexR{автоцитирование}
-Когда компьютеры были большими, а память была маленькой,\footnote*{Память
-(вместе с~подсистемами ввода-вывода) всё ещё остаётся одной из наиболее дорогих
-частей компьютера, хоть и постоянно дешевеет.} для переменных часто применялось
-\term{автоцитирование}. Если с~переменной не~было связано какое-либо значение,
-то этим значением становился символ с~именем переменной. Было~бы очень обидно
-видеть, как понятия переменной и символа, которые мы так усердно разделяли,
-опять смешиваются и перепутываются.
+\ indexR {autocycling}
+When the computers were large and the memory was small, \ footnote * {Memory
+(along with ~ I / O subsystems) is still one of the most expensive
+parts of the computer, though constantly becoming cheaper.} for variables,
+\ term {autocytics}. If a value is associated with a variable,
+then the value with the name of the variable became that value. It would be very disappointing
+To see how the concepts of variable and symbol, which we so zealously shared,
+again mixed and mixed up.
 
-Хотя это несомненно удобно "--- никогда не~вызывать ошибок, но такой идеальный
-мир имеет большой недостаток: задача программы не~в~том, чтобы работать без
-ошибок, а в~том, чтобы выполнять то, для чего она предназначена. В~этом смысле
-ошибки играют роль перил: если мы на них натыкаемся, то это значит, мы идём
-куда"~то не~туда. Ошибки должны быть обнаружены как можно раньше, чтобы как
-можно быстрее их исправить. Следовательно, использование автоцитирования "---
-плохое решение, потому что оно скрывает некоторые ошибки, которые могли~бы быть
-исправлены раньше.
+Although this is undoubtedly convenient "--- never ~ cause errors, but such an ideal
+The world has a big drawback: the task of the program is not to work without
+errors, but in order to perform what it is intended for. In this sense
+mistakes play the role of a handrail: if we stumble upon them, it means we are going
+where "~ then not ~ there." Errors should be detected as early as possible so that both
+you can fix them faster. Consequently, the use of autocytotation "---
+a bad decision, because it hides some errors that could have been
+corrected earlier.
 
-Функция~\ic{update!} изменяет окружение, так что, скорее всего, тоже может
-вызвать такую~же ошибку: нельзя изменить значение неизвестной переменной. Мы
-обсудим, следует~ли ей так поступать, когда будем говорить о~глобальном
-окружении.
+The ~ \ ic {update!} Function changes the environment, so it's likely that it can also
+cause the same error: you can not change the value of an unknown variable. we
+we will discuss whether it should be so when we talk about the global
+surrounded by.
 
-\indexC{update"!}
-\begin{code:lisp}
+\ indexC {update "!}
+\ begin {code: lisp}
 (define (update! id env value)
   (if (pair? env)
       (if (eq? (caar env) id)
           (begin (set-cdr! (car env) value)
                  value)
-          (update! id (cdr env) value) )
-      (wrong "No such binding" id) ) )
-\end{code:lisp}
+          (update! id (cdr env) value))
+      (wrong "No such binding" id)))
+\ end {code: lisp}
 
-\ForLayout{display}{\endgroup}
+\ ForLayout {display} { \ endgroup }
 
-\indexCS{set"!}{возвращаемое значение}
-\indexR{присваивание!возвращаемое значение}
-\indexR{возвращаемые значения!присваивания}
-Возвращаемое значение функции~\ic{update!} выбрано с~учётом того, что это
-значение станет значением всего выражения присваивания. В~Scheme это значение
-не~определено. Строго говоря, программам не~следует полагаться на какое"~то
-значение, но, тем не~менее, мы вынуждены выбирать, что именно будем возвращать
-в~нашем случае. Например:
+\ indexCS {set "!} {return value}
+\ indexR {assignment! return value}
+\ indexR {return assignment values}
+The return value of the function ~ \ ic {update!} Was chosen with the account that this
+value becomes the value of the entire assignment expression. In ~ Scheme this value
+not ~ defined. Strictly speaking, programs should not rely on any "~
+meaning, but, nevertheless, we are forced to choose what exactly we will return
+in our case. For example:
 
-\begin{enumerate}
-  \item только что присвоенное значение (так сделано сейчас);
+\ begin {enumerate}
+  \ item the value just assigned (as done now);
 
-  \item предыдущее значение переменной (могут быть проблемы
-        с~инициализацией, первым присваиванием);
+  \ item the previous value of the variable (there may be problems
+        with initialization, first assignment);
 
-  \item \indexC*{UFO}{\#<UFO>}\label{basics/s:env/ufo}
-        объект <<неопределённое значение>>, некий \ic{\#<UFO>},
-        используемый исключительно как индикатор неопределённого
-        значения;
+  \ item  \ indexC * {UFO} { \ # <UFO>} \ label {basics / s: env / ufo}
+        the object is "indefinite", some \ ic { \ # <UFO>},
+        used exclusively as an indicator of uncertain
+        values;
 
-  \item значение формы с~неопределённым значением, вроде
-        \ic{set-cdr!} в~Scheme.
-\end{enumerate}
+  \ item value of the form with an undefined value, like
+        \ ic {set-cdr!} in ~ Scheme.
+\ end {enumerate}
 
-\indexR{окружение!как тип данных}
-Окружения "--- это составной абстрактный тип данных. Мы уже можем извлекать и
-изменять их части с~помощью соответствующих функций; но ещё надо уметь
-создавать новые окружения и добавлять в~них новые части.
+\ indexR {environment! as data type}
+Environments "is a composite abstract data type .We can already extract and
+to change their parts with the help of the corresponding functions; But still need to be able to
+Create new environments and add new parts to them.
 
-\indexR{окружение!начальное}
-Изначально в~окружении ничего нет. Это записывается просто:
+\ indexR {environment! initial}
+Initially, there is nothing in the environment. This is written simply:
 
-\indexC{env.init}
-\begin{code:lisp}
+\ indexC {env.init}
+\ begin {code: lisp}
 (define env.init '())
-\end{code:lisp}
+\ end {code: lisp}
 
-(Чуть позже, в~разделе~\ref{basics/sect:representing-functions}, мы сделаем его
-не~таким необитаемым.)
+(A little later, in the section \ ref {basics / sect: representing-functions}, we'll make it
+not so uninhabited.)
 
-Когда вызывается функция, для неё создаётся новое окружение, в~котором её
-аргументы связаны со~своими фактическими значениями. Функция~\ic{extend}
-расширяет окружение~\ic{env} переменными~\ic{variables} с~соответствующими
-значениями~\ic{values}.
+When a function is called, a new environment is created for it, in which it
+the arguments are related to their actual values. The function ~ \ ic {extend}
+extends the environment ~ \ ic {env} with variables \ ic {variables} with the corresponding
+values ​​of ~ \ ic {values}.
 
-\indexC{extend}
-\begin{code:lisp}
+\ indexC {extend}
+\ begin {code: lisp}
 (define (extend env variables values)
   (cond ((pair? variables)
          (if (pair? values)
              (cons (cons (car variables) (car values))
-                   (extend env (cdr variables) (cdr values)) )
-             (wrong "Too few values") ) )
+                   (extend env (cdr variables) (cdr values)))
+             (wrong "Too few values")))
         ((null? variables)
          (if (null? values)
              env
-             (wrong "Too many values") ) )
-        ((symbol? variables) (cons (cons variables values) env)) ) )
-\end{code:lisp}
+             (wrong "Too many values")))
+        ((symbol? variables) (cons (cons variables values) env))))
+\ end {code: lisp}
 
-\indexR{список аргументов}
-\indexR{синтаксис!списка аргументов}
-\indexR{переменные!точечные}
-\indexR{точечные переменные}
-Главная сложность состоит в~том, что нам надо проанализировать все варианты
-записи <\ii{списка аргументов}>, какие разрешены в~Scheme.\footnote*{Некоторые
-лисп-системы, вроде \CommonLisp, поддались соблазну расширить синтаксис перечня
-аргументов ключевыми словами вроде \ic{\&aux}, \ic{\&key}, \ic{\&rest}. Но это
-сильно усложняет синтаксический разбор и связывание. Иные системы позволяют даже
-обобщённое указание аргументов с~помощью шаблонов~\cite{sj93}.} Список
-аргументов может быть представлен не~только обычным списком символов, но и
-точечным: заканчивающимся не~на~\ic{()}, а на определённый символ
-(\term{точечную переменную}). Более формально список аргументов описывается
-следующей грамматикой:
+\ indexR {argument list}
+\ indexR {syntax of argument list}
+\ indexR {variables}
+\ indexR {point variables}
+The main difficulty is that we need to analyze all the options
+records of the < \ ii {argument list}> that are allowed in ~ Scheme. \ footnote * {Some
+Lisp systems, like \ CommonLisp , succumbed to the temptation to expand the syntax of the list
+arguments with keywords like \ ic { \ & aux}, \ ic { \ & key}, \ ic { \ & rest}. But this
+greatly complicates the parsing and binding. Other systems allow even
+generic specification of arguments using templates ~ \ cite {sj93}.} List
+arguments can be represented not only by a normal list of symbols, but also by
+point: end up not ~ on ~ \ ic {()}, but on a certain character
+( \ term {point variable}). More formally, the list of arguments is described
+the following grammar:
 
-\begin{center}\setlength{\tabcolsep}{2pt}\begin{tabular}{rcl}
-  <\ii{список аргументов}> &  ::=  & \ic{()}                                  \\
-                           &   |   & <\ii{переменная}>                        \\
-                           &   |   & \ic{({\normalfont<\ii{переменная}>}
-                                    . {\normalfont<\ii{список аргументов}>})} \\
-         <\ii{переменная}> & $\in$ & \Vset{Символы}
-\end{tabular}\end{center}
+\ begin {center} \ setlength { \ tabcolsep } {2pt} \ begin {tabular} {rcl}
+  < \ ii {argument list}> & :: = & \ ic {()}                                   \\
+                           & | & < \ ii {variable}>                         \\
+                           & | & \ ic {({ \ normalfont < \ ii {variable}>}
+                                    . { \ normalfont < \ ii {argument list}>})} \\
+         < \ ii {variable}> & $ \ in $ & \ Vset {Characters}
+\ end {tabular} \ end {center}
 
-Когда мы расширяем окружение, количество значений переменных должно
-соответствовать количеству их имён. Обычно их поровну, но если список
-оканчивается на точечную (или~\term{n"~арную}) переменную, то она связывается
-со~списком всех оставшихся аргументов. Как~бы то ни~было, возможны две ошибки:
-или значений больше, чем переменных, или наоборот.
+When we expand the environment, the number of variable values ​​must
+correspond to the number of their names. Usually they are equally divided, but if the list
+ends with a point (or ~ \ term {n "~ aryna)) variable, it is bound
+with a list of all the remaining arguments. As it were, there are two possible errors:
+or values ​​greater than variables, or vice versa.
 
 
-\section{Представление функций}\label{basics/sect:representing-functions}
+\ section {Representing functions} \ label {basics / sect: representing-functions}
 
-Наверное, проще всего представлять функции с~помощью функций. Естественно, это
-не~тавтология, и читать следует так: <<функции определяемого языка проще всего
-представлять функциями языка определения>>. Это сильно упрощает механизм вызова:
-функция~\ic{invoke} должна лишь проверить, действительно~ли её первый аргумент
-является функцией: чем"~то, что можно вызвать.
+Perhaps the easiest way to represent functions with functions. Naturally, this
+not a tautology, and read as follows: << the functions of the language being defined are the easiest
+represent functions of the language of definition >>. This greatly simplifies the call mechanism:
+the function ~ \ ic {invoke} should only test whether its first argument is valid
+is a function: than "~ what can be called.
 
-\indexC{invoke}
-\begin{code:lisp}
+\ indexC {invoke}
+\ begin {code: lisp}
 (define (invoke fn args)
   (if (procedure? fn) (fn args)
-      (wrong "Not a function" fn) ) )
-\end{code:lisp}
+      (wrong "Not a function" fn)))
+\ end {code: lisp}
 
-Проще некуда. Даже может возникнуть вопрос, зачем вообще нужна отдельная
-функция, когда весь этот код можно было встроить сразу в~\ic{evaluate}. Причина,
-по которой так сделано, в~том, что мы показываем структуру будущих
-интерпретаторов, а в~них \ic{invoke} будет уже не~такой простой. Кстати,
-попробуйте сейчас выполнить упражнения~\ref{basics/ex:def-call/cc}
-и~\ref{basics/ex:def-apply}.
+It's harder to put it. Even the question may arise, why do we need a separate
+function, when all this code could be built right into ~ \ ic {evaluate}. Cause,
+on which this is done, in the fact that we show the structure of future
+interpreters, and in them \ ic {invoke} will no longer be so simple. By the way,
+try now to do the exercises ~ \ ref {basics / ex: def-call / cc}
+and ~ \ ref {basics / ex: def-apply}.
 
-\indexR{аппликация!порядок вычисления термов}
-\indexR{порядок вычислений!термов аппликации}
-Также у~нас появляется новый тип ошибок, возникающих при попытке вызвать
-невызываемое. Сейчас мы обрабатываем такие ошибки в~момент применения функции
-к~уже вычисленным аргументам, но мы могли~бы предупреждать пользователя раньше.
-В~таком случае нам необходимо задать порядок вычисления элементов формы вызова
-функции:
+\ indexR {application! order of calculating terms}
+\ indexR {order of calculation! of terms of application}
+Also, we have a new type of error that occurs when trying to call
+unavailable. Now we are processing such errors at the time of application of the function
+to ~ already computed arguments, but we could ~ warn the user before.
+In this case, we need to specify the order of calculation of the elements of the call form
+functions:
 
-\begin{enumerate}
-  \item вычислить элемент на месте функции;
+\ begin {enumerate}
+  \ item calculate the element in place of the function;
 
-  \item если это не~функция, сообщить об~ошибке;
+  \ item if it is not a function, report an error;
 
-  \item вычислить аргументы слева направо;
+  \ item evaluate the arguments from left to right;
 
-  \item сравнить количество аргументов с~арностью функции
-        и, если они не~совпадают, то сообщить об~ошибке.
-\end{enumerate}
+  \ item compare the number of arguments with function arity
+        and if they do not match, then report an error.
+\ end {enumerate}
 
-Вычислять аргументы слева направо кажется логичным для людей, читающих слева
-направо. Это и запрограммировать легче, в~итоге порядок прост и понятен.
-Сложности возникают только у~компилятора, потому что если ему захочется поменять
-этот порядок (например, чтобы эффективнее использовать регистры процессора), то
-он будет вынужден доказать, что это не~изменит смысла программы.
+Calculating arguments from left to right seems logical for people reading on the left
+right. This is easier to program, in the end, the order is simple and straightforward.
+Complexities arise only in the compiler, because if he wants to change
+This order (for example, to use the processor registers more efficiently), then
+he will be forced to prove that this will not change the meaning of the program.
 
-Конечно, мы могли бы действовать эффективнее, проверяя арность ещё раньше:
+Of course, we could act more efficiently, checking arness even earlier:
 
-\begin{enumerate}
-  \item вычислить элемент на месте функции;
+\ begin {enumerate}
+  \ item calculate the element in place of the function;
 
-  \item если это не~функция, сообщить об~ошибке, иначе запомнить ожидаемое
-        количество аргументов;
+  \ item if it is not a function, report an error, otherwise remember the expected
+        number of arguments;
 
-  \item вычислять аргументы слева направо до тех пор, пока их количество
-        согласуется с~арностью функции, в~случае проблем сообщить об~ошибке;
+  \ item evaluate arguments from left to right until their number
+        is consistent with the arity of the function, in case of problems, report an error;
 
-  \item применить функцию к~аргументам.\footnote*{Функция могла бы потом
-        ещё проверять на правильность типы переданных аргументов, но это
-        не~имеет отношения к~механизму вызова.}
-\end{enumerate}
+  \ item apply the function to arguments. \ footnote * {The function could then
+        still check for the correctness of the types of arguments passed, but this
+        not ~ has a relationship to the call mechanism.}
+\ end {enumerate}
 
-Стандарт {\CommonLisp} требует, чтобы аргументы вычислялись строго слева
-направо, но с~целью оптимизации позволяет вычислять функциональный элемент
-списка до или после остальных.
+The { \ CommonLisp } standard requires that arguments be evaluated strictly on the left
+to the right, but with the purpose of optimization it allows us to calculate the functional element
+list before or after the rest.
 
-Scheme~же не~накладывает условий на порядок вычисления всех элементов формы
-вызова функции, включая сам элемент-функцию. Так как ограничений нет, то
-компилятор волен выбирать любой устраивающий его порядок.
-\seePage[denotational/sect:eval-order] А~пользователь, в~свою очередь, не~может
-рассчитывать на какой-либо определённый порядок вычислений и должен использовать
-\ic{begin}, чтобы задать необходимый порядок явно.
+Scheme ~ does not impose conditions on the order of calculation of all elements of the form
+function call, including the function element itself. Since there are no restrictions, then
+the compiler is free to choose any order that suits it.
+\ seePage [denotational / sect: eval-order] A ~ user, in turn, can not ~
+calculate a certain order of calculations and must use
+\ ic {begin} to specify the required order explicitly.
 
-Считается плохим стилем использовать вызовы функций, чтобы получить побочные
-эффекты в~нужной последовательности. Поэтому следует избегать выражений вроде
-\ic{(f (set! f $\pi$) (set! f $\pi'$))}, где неясно, какая~же функция будет
-вызвана на самом деле. Ошибки, возникающие в~подобных случаях, очень сложно
-отлавливать.
-
-
-\subsection*{Окружение исполнения~функций}
-
-\indexR{окружение!исполнения тела функции}
-Применение функции сводится к~вычислению выражений, составляющих её тело,
-в~окружении, где аргументы функции связаны со~значениями, переданными при вызове
-функции. Вспомните, что при вызове \ic{make-function} мы передали всё
-необходимое для этого, находящееся в~распоряжении \ic{evaluate}. В~оставшейся
-части этого раздела мы будем разбирать используемые при вычислениях окружения,
-в~программах они будут набраны \ii{курсивом}.
+It is considered a bad style to use function calls to get side-by-side
+effects in the desired sequence. Therefore, expressions like
+\ ic {(f (set! f $ \ pi $ ) (set! f $ \ pi ' $ ))}, where it is not clear which function will be
+is called in fact. Errors that arise in such cases are very difficult
+to catch.
 
 
-\subsubsection{Минимальное окружение}
+\ subsection * {Enforcement environment of ~ functions}
 
-Для начала рассмотрим минимально возможное окружение:
+\ indexR {environment! of the execution of the body function}
+The application of the function is reduced to the calculation of the expressions that make up its body,
+in an environment where the arguments of the function are associated with the values ​​passed in the call
+function. Remember that when we called \ ic {make-function}, we passed everything
+necessary for this, in the \ ic {evaluate} order. In the remaining
+part of this section, we will disassemble the environment used for computing,
+in ~ programs they will be typed \ ii {italics}.
 
-\indexC{make-function}
-\begin{code:lisp}
+
+\ subsubsection {Minimal environment}
+
+First, let's look at the minimal possible environment:
+
+\ indexC {make-function}
+\ begin {code: lisp}
 (define (make-function variables body env)
   (lambda (values)
-    (eprogn body (extend |\ii{env.init}| variables values)) ) )
-\end{code:lisp}
+    (eprogn body (extend | \ ii {env.init} | variables values))))
+\ end {code: lisp}
 
-\indexE{K@\protect\comb{K}, комбинатор}
-\indexR{комбинаторы!K@\protect\comb{K}}
-В~строгом соответствии с~ранее описанным соглашением, тело функции вычисляется
-в~окружении, где аргументы функции связаны с~переданными значениями. Например,
-получив в~результате вызова \ic{make-function} комбинатор~\comb{K}, определяемый
-как \ic{(lambda (a~b) a)}, мы можем его вызвать следующим образом:
+\ indexE {K @ \ protect \ comb {K}, combinator}
+\ indexR {combinators! K @ \ protect \ comb {K}}
+In strict accordance with the previously described agreement, the function body is computed
+in an environment where the arguments of the function are associated with the values ​​passed. For example,
+having received in the result of a call \ ic {make-function} the combinator ~ \ comb {K}, defined
+as \ ic {(lambda (a ~ b) a)}, we can call it as follows:
 
-\begin{code:lisp}
-(K 1 2) |\is| 1
-\end{code:lisp}
+\ begin {code: lisp}
+(K 1 2) | \ is | 1
+\ end {code: lisp}
 
-Но есть и неприятность: функция может использовать только свои аргументы и
-локальные переменные, потому что мы определили \ii{env.init} как пустое
-окружение. В~нём нет даже базовых функций из глобального окружения вроде
-\ic{car} или \ic{cons}.
+But there is also a nuisance: the function can only use its arguments and
+local variables, because we defined \ ii {env.init} as empty
+environment. In ~ it does not even have basic functions from a global environment like
+\ ic {car} or \ ic {cons}.
 
 
-\subsubsection{Улучшенное окружение}
+\ subsubsection {Improved environment}
 
-Хорошо, попробуем улучшить наше определение следующим образом:
+Well, let's try to improve our definition as follows:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (define (make-function variables body env)
   (lambda (values)
-    (eprogn body (extend |\ii{env.global}| variables values)) ) )
-\end{code:lisp}
+    (eprogn body (extend | \ ii {env.global} | variables values))))
+\ end {code: lisp}
 
-Замечательно, теперь наши функции имеют доступ к~глобальному окружению и всем
-его функциям. А~что если мы попробуем определить взаимно рекурсивные функции?
-Также, какой результат даст программа слева (справа она~же с~раскрытыми
-макросами)?
+Remarkably, now our functions have access to the ~ global environment and all
+its functions. And what if we try to define mutually recursive functions?
+Also, what result will the program give to the left (on the right it is the same with the ~ opened
+macros)?
 
-{\def\E{\hbox to 0pt{\kern0.3em$\equals$}}
-\begin{code:lisp}
-(let ((a 1))            ((lambda (a)
-  (let ((b (+ 2 a)))       ((lambda (b)
-    (list a b) ) )   |\E|         (list a b) )
-                            (+ 2 a) ) )
+{ \ def \ E { \ hbox to 0pt { \ kern 0.3em $ \ equals $ }}
+\ begin {code: lisp}
+(let ((a 1)) ((lambda (a)
+  (let ((b (+ 2 a))) ((lambda (b)
+    (list ab))) | \ E | (list ab))
+                            (+ 2 a)))
                          1 )
-\end{code:lisp}}
+\ end {code: lisp}}
 
-Давайте рассмотрим по шагам, как вычисляется это выражение:
+Let's look at the steps, how this expression is evaluated:
 
-\begin{code:lisp}
-((lambda (a) ((lambda (b) (list a b)) (+ 2 a))) 1)|\begin{where}
-                                                   \- \ii{env.global}
-                                                   \end{where}|
-|\equals| ((lambda (b) (list a b)) (+ 2 a))|\begin{where}
-                                            \- a {\is} 1
-                                            \- \ii{env.global}
-                                            \end{where}|
-|\equals| (list a b)|\begin{where}
-                     \- b {\is} 3
-                     \- \ii{env.global}
-                     \end{where}|
-\end{code:lisp}
+\ begin {code: lisp}
+((lambda (a) ((lambda (b) (list ab)) (+ 2 a))) 1) | \ begin {where}
+                                                   \ -  \ ii {env.global}
+                                                   \ end {where} |
+| | \ equals | ((lambda (b) (list ab)) (+ 2 a)) | \ begin {where}
+                                            \ - a { \ is } 1
+                                            \ -  \ ii {env.global}
+                                            \ end {where} |
+| | \ equals | (list ab) | \ begin {where}
+                     \ - b { \ is } 3
+                     \ -  \ ii {env.global}
+                     \ end {where} |
+\ end {code: lisp}
 
-Тело внутренней функции \ic{(lambda (b) (list a~b))} выполняется в~окружении,
-полученном расширением глобального окружения переменной~\ic{b}. Всё верно. Но
-в~этом окружении нет необходимой переменной~\ic{a}!
+The body of the inner function \ ic {(lambda (b) (list a ~ b))} is executed in an environment,
+obtained by extending the global environment variable ~ \ ic {b}. That's right. But
+in this environment there is no necessary variable ~ \ ic {a}!
 
 
-\subsubsection{Улучшенное окружение (вторая~попытка)}
+\ subsubsection {Improved environment (second attempt)}
 
-Так как нам надо видеть переменную~\ic{a} во~внутренней функции, то достаточно
-будет передать \ic{invoke} текущее окружение, а она в~свою очередь передаст его
-вызываемой функции. Чтобы реализовать эту идею, надо немного подправить
-\ic{evaluate} и \ic{invoke}; чтобы не~путать эти определения с~предыдущими,
-пусть они начинаются на~\ic{d.}:
+Since we need to see the variable ~ \ ic {a} in the internal function, it is sufficient
+will pass \ ic {invoke} the current environment, and it will in turn transfer it
+called function. To realize this idea, it is necessary to correct a little
+\ ic {evaluate} and \ ic {invoke}; so as not to confuse these definitions with previous ones,
+let them start at ~ \ ic {d.}:
 
-\indexC{d.evaluate}
-\indexC{d.invoke}
-\indexC{d.make-function}
-\begin{code:lisp}
+\ indexC {d.evaluate}
+\ indexC {d.invoke}
+\ indexC {d.make-function}
+\ begin {code: lisp}
 (define (d.evaluate e env)
   (if (atom? e) ...
       (case (car e)
         ...
         ((lambda) (d.make-function (cadr e) (cddr e) env))
-        (else     (d.invoke (d.evaluate (car e) env)
+        (else (d.invoke (d.evaluate (car e) env)
                             (evlis (cdr e) env)
-                            env )) ) ) )
+                            env)))))
 
 (define (d.invoke fn args env)
   (if (procedure? fn)
       (fn args env)
-      (wrong "Not a function" fn) ) )
+      (wrong "Not a function" fn)))
 
-(define (d.make-function variables body |\ii{def.env}|)
-  (lambda (values |\ii{current.env}|)
-    (eprogn body (extend |\ii{current.env}| variables values)) ) )
-\end{code:lisp}
+(define (d.make-function variables body | \ ii {def.env} |)
+  (lambda (values ​​| \ ii {current.env} |)
+    (eprogn body (extend | \ ii {current.env} | variables values))))
+\ end {code: lisp}
 
-В~этом определении стоит заметить, что передача окружения определения \ic{env}
-через переменную~\ii{def.env} бессмысленна, так как при вызове используется лишь
-текущее окружение \ii{current.env}.
+In this definition, it should be noted that passing the environment of the definition \ ic {env}
+through the variable ~ \ ii {def.env} is meaningless, since only
+current environment \ ii {current.env}.
 
-\indexR{стек!вызовов}
-Давайте теперь ещё раз рассмотрим пример, приведённый выше. Сейчас переменные
-не~пропадают:
+\ indexR {call stack}
+Let's take another look at the example above. Now the variables
+do not disappear:
 
-\begin{code:lisp}
-((lambda (a) ((lambda (b) (list a b)) (+ 2 a))) 1)|\begin{where}
-                                                   \- \ii{env.global}
-                                                   \end{where}|
-|\equals| ((lambda (b) (list a b)) (+ 2 a))|\begin{where}
-                                            \- a {\is} 1
-                                            \- \ii{env.global}
-                                            \end{where}|
-|\equals| (list a b)|\begin{where}
-                     \- b {\is} 3
-                     \- a {\is} 1
-                     \- \ii{env.global}
-                     \end{where}|
-\end{code:lisp}
+\ begin {code: lisp}
+((lambda (a) ((lambda (b) (list ab)) (+ 2 a))) 1) | \ begin {where}
+                                                   \ -  \ ii {env.global}
+                                                   \ end {where} |
+| | \ equals | ((lambda (b) (list ab)) (+ 2 a)) | \ begin {where}
+                                            \ - a { \ is } 1
+                                            \ -  \ ii {env.global}
+                                            \ end {where} |
+| | \ equals | (list ab) | \ begin {where}
+                     \ - b { \ is } 3
+                     \ - a { \ is } 1
+                     \ -  \ ii {env.global}
+                     \ end {where} |
+\ end {code: lisp}
 
-Заодно мы явно видим \emph{стек вызовов}: каждая связывающая форма сначала
-укладывает свои новые переменные поверх текущего окружения, а потом убирает их
-оттуда после окончания вычислений.
+At the same time, we explicitly see the \ emph {call stack}: each binding form first
+puts its new variables on top of the current environment, and then removes them
+from there after the end of the calculations.
 
 
-\subsubsection{Исправляем проблему}
+\ subsubsection {Fix the problem}
 
-Но даже при таком определении всё ещё есть проблемы. Рассмотрим следующий
-пример:
+But even with this definition, there are still problems. Consider the following
+example:
 
-\begin{code:lisp}
-(((lambda (a)
-     (lambda (b) (list a b)) )
+\ begin {code: lisp}
+((((lambda (a)
+     (lambda (b) (list ab)))
   1 )
- 2 )
-\end{code:lisp}
+ 2)
+\ end {code: lisp}
 
-Функция~\ic{(lambda (b) (list a~b))} создаётся в~окружении, где \ic{a} связана
-со~значением~\ic{1}, но в~момент вызова в~окружении будет присутствовать
-только~\ic{b}. Таким образом, мы опять потеряли переменную~\ic{a}.
+The function ~ \ ic {(lambda (b) (list a ~ b))} is created in an environment where \ ic {a} is bound
+with the value ~ \ ic {1}, but in the moment of the call in the environment will be present
+only ~ \ ic {b}. Thus, we again lost the variable ~ \ ic {a}.
 
-Без сомнения, вы заметили, что в~определении \ic{d.make-function} присутствуют
-два окружения: окружение определения \ii{def.env} и окружение исполнения
-\ii{current.env}. В~жизни функции есть два важных события: её создание и
-её~вызов(ы). Очевидно, что создаётся функция только однажды, а вызываться может
-несколько раз; или вообще никогда не~вызываться. Следовательно,
-единственное\footnote{На~самом деле, здесь можно использовать любое необходимое
-окружение. См.~про форму~\ic{closure} на
-странице~\pageref{assignement/assignement/para:closure}.} окружение, которое мы
-однозначно можем связать с~функцией, "--- это окружение, в~котором она была
-создана. Вернёмся к~исходным определениям функций \ic{evaluate} и \ic{invoke},
-но в~этот раз функцию~\ic{make-function} запишем следующим образом:
+No doubt, you noticed that in the definition of \ ic {d.make-function} there are
+two environments: the definition environment \ ii {def.env} and the execution environment
+\ ii {current.env}. There are two important events in the life of a function: its creation and
+her ~ challenge (s). Obviously, a function is created only once, and can be called
+repeatedly; or never ~ be called at all. Consequently,
+The only \ footnote {In fact, here you can use whatever you need
+environment. See ~ about the form ~ \ ic {closure} on
+page ~ \ pageref {assignement / assignement / para: closure}.} The environment that we
+can uniquely be associated with a ~ function, "is the environment in which it was
+created. We return to the initial definitions of the functions \ ic {evaluate} and \ ic {invoke},
+but in ~ this time the function ~ \ ic {make-function} is written as follows:
 
-\indexC{make-function}
-\begin{code:lisp}[label=basics/representing-functions/fixing/src:inject-current-env]
-(define (make-function variables body |\ii{env}|)
+\ indexC {make-function}
+\ begin {code: lisp} [label = basics / representing-functions / fixing / src: inject-current-env]
+(define (make-function variables body | \ ii {env} |)
   (lambda (values)
-    (eprogn body (extend |\ii{env}| variables values)) ) )
-\end{code:lisp}
+    (eprogn body (extend | \ ii {env} | variables values))))
+\ end {code: lisp}
 
-Теперь все приведённые примеры работают нормально. В~частности, пример выше
-вычисляется следующим образом:
+Now all the above examples work fine. In particular, the example above
+is calculated as follows:
 
-\begin{code:lisp}
-(((lambda (a) (lambda (b) (list a b))) 1) 2)|\begin{where}
-                                             \- \ii{env.global}
-                                             \end{where}|
-|\equals| ((lambda (b) (list a b))|\begin{where}
-                                   \- a {\is} 1
-                                   \- \ii{env.global}
-                                   \end{where}|
-    2 )|\begin{where}
-        \- \ii{env.global}
-        \end{where}|
-|\equals| (list a b)|\begin{where}
-                     \- b {\is} 2
-                     \- a {\is} 1
-                     \- \ii{env.global}
-                     \end{where}|
-\end{code:lisp}
+\ begin {code: lisp}
+(((lambda (a) (lambda (b) (list ab))) 1) 2) | \ begin {where}
+                                             \ -  \ ii {env.global}
+                                             \ end {where} |
+| | \ equals | ((lambda (b) (list ab)) | \ begin {where}
+                                   \ - a { \ is } 1
+                                   \ -  \ ii {env.global}
+                                   \ end {where} |
+    2) | \ begin {where}
+        \ -  \ ii {env.global}
+        \ end {where} |
+| | \ equals | (list ab) | \ begin {where}
+                     \ - b { \ is } 2
+                     \ - a { \ is } 1
+                     \ -  \ ii {env.global}
+                     \ end {where} |
+\ end {code: lisp}
 
-\indexR{абстракция!замыкание}
-\indexR{абстракция!значение}
-\indexR{возвращаемые значения!абстракций}
-\indexR{замыкания (closures)}
-Форма \ic{(lambda (b) (list a~b))} создаётся в~глобальном окружении, расширенном
-переменной~\ic{a}. Когда эта функция вызывается, она расширяет окружение своего
-создания переменной~\ic{b}, таким образом, тело функции будет вычисляться
-в~окружении, где обе переменные \ic{a} и~\ic{b} присутствуют. После того, как
-функция вернёт результат, исполнение продолжается в~глобальном окружении. Мы
-будем называть значение абстракции \term{замыканием} (closure), потому что при
-создании этого значения тело функции становится замкнутым в~окружении своего
-определения.
+\ indexR {abstraction! closure}
+\ indexR {abstraction! value}
+\ indexR {return values ​​of! abstractions}
+\ indexR {closures}
+The form \ ic {(lambda (b) (list a ~ b))} is created in a ~ global environment expanded
+variable ~ \ ic {a}. When this function is called, it expands its
+creating the variable ~ \ ic {b}, so the body of the function will be computed
+in an environment where both the variables \ ic {a} and ~ \ ic {b} are present. After
+the function returns the result, the execution continues in the global environment. we
+we will call the value of abstraction \ term {closure} (closure), because when
+the body of the function becomes closed in the environment of its own
+definition.
 
-Стоит отметить, что сейчас \ic{make-function} сама использует замыкания языка
-определения. Это не~является обязательным, как мы покажем далее в~третьей главе.
-\seePage[escape/actors/ssect:functions] Функция~\ic{make-function} возвращает
-замыкания, а это "--- характерная черта функциональных языков программирования.
+It is worth noting that now \ ic {make-function} itself uses language closures
+definition. This is not ~ mandatory, as we will show later in the third chapter.
+\ seePage [escape / actors / ssect: functions] The function \ ic {make-function} returns
+closure, and this "is a characteristic feature of functional programming languages.
 
 
-\subsection{Динамическая и~лексическая области~видимости}%
-\label{basics/representing-functions/ssect:dynamic-and-lexical-binding}
+\ subsection {Dynamic and lexical scope ~ visibility} %
+\ label {basics / representing-functions / ssect: dynamic-and-lexical-binding}
 
-Из~этого разговора об~окружениях можно сделать два вывода. Во-первых, ясно,
-что с~окружениями не~всё так просто. Любое вычисление всегда производится
-в~каком"~то окружении, следовательно, необходимо эффективно реализовывать их
-использование. В~третьей главе рассматриваются более сложные вещи вроде
-раскрутки стека и соответствующей формы~\ic{unwind-protect}, которые потребуют
-от нас ещё более точного контроля над окружениями.
+Two conclusions can be drawn from this conversation about environments. First, it is clear,
+that with environments not everything is that simple. Any calculation is always done
+in what "environment, therefore, it is necessary to effectively implement them
+using. The third chapter deals with more complex things like
+unwrapping the stack and the corresponding ~ \ ic {unwind-protect} form , which will require
+from us even more accurate control over the environment.
 
-\indexR{лексическое связывание}\indexR{динамическое связывание}
-\indexR{связывание!лексическое}\indexR{связывание!динамическое}
-\indexR{Лисп!лексический}\indexR{Лисп!динамический}
-Второй момент связан с~двумя рассмотренными в~предыдущем разделе вариантами,
-которые являются примерами \term{лексического} и \term{динамического
-связывания}\footnote{В~объектно"=ориентированных языках под динамическим
-связыванием обычно понимается механизм выбора метода объекта на основе его
-реального типа во~время исполнения программы, в~противоположность статическому
-связыванию, при котором метод выбирается компилятором исходя из типа переменной,
-которая хранит рассматриваемый объект.} (также применяются термины лексическая и
-динамическая область видимости). В~\emph{лексическом} Лиспе функция выполняется
-в~окружении своего определения, расширенном собственными переменными, тогда как
-в~\emph{динамическом} "--- расширяет текущее окружение, окружение своего вызова.
+\ indexR {lexical binding} \ indexR {dynamic binding}
+\ indexR {link! lexical} \ indexR {link! dynamic}
+\ indexR {Lisp lexical} \ indexR {Lisp dynamic}
+The second point is related to the ~ two variants considered in the previous section,
+which are examples of \ term {lexical} and \ term {dynamic
+binding} \ footnote {In the "object" = oriented languages ​​under dynamic
+binding is usually understood as the mechanism for selecting an object's method based on its
+real type during the execution of the program, in contrast to the static
+binding, in which the method is selected by the compiler based on the type of the variable,
+which stores the object under consideration.} (The terms lexical and
+dynamic scope). In ~ \ emph {lexical} Lisp, the function is executed
+in the environment of his definition, extended by his own variables, whereas
+in ~ \ emph {dynamic} "--- expands the current environment, the environment of its call.
 
-Сейчас в~моде лексическое связывание, но это не~значит, что у~динамического нет
-будущего. С~одной стороны, именно динамическое связывание применяется
-в~некоторых довольно популярных языках вроде \TeX~\cite{knu84},
-Emacs~Lisp\trnote{Начиная с~Emacs~Lisp v.\,24 и Perl~5, эти языки имеют и
-лексические переменные.}~\cite{llst93}, Perl~\cite{ws91}.
+Now in the mode of lexical binding, but this does not mean that there is no dynamic linkage
+future. On the one hand, it is the dynamic binding that is applied
+in some fairly popular languages ​​like \ TeX ~ \ cite {knu84},
+Emacs ~ Lisp \ trnote {Starting with ~ Emacs ~ Lisp v. \, 24 and Perl ~ 5, these languages ​​have and
+lexical variables.} ~ \ cite {llst93}, Perl ~ \ cite {ws91}.
 
-С~другой стороны, сама идея динамической области видимости является важной
-концепцией программирования. Она соответствует установке связей перед
-выполнением вычислений и гарантированному автоматическому удалению этих связей
-после завершения вычислений.
+On the other hand, the very idea of ​​a dynamic scope is important
+concept of programming. It corresponds to the installation of links before
+execution of calculations and guaranteed automatic deletion of these links
+after completion of calculations.
 
-\indexR{исключения}
-\indexR{поиск с возвратом}
-Такую стратегию можно эффективно применять, например, в~искусственном
-интеллекте. В~этом случае сначала выдвигается некая гипотеза, затем из неё
-вырабатываются следствия. Как только система натыкается на противоречие, то
-гипотезу следует отвергнуть и перейти к~следующей. Это называется \term{поиском
-с~возвратом}. Если следствия гипотез хранятся без использования побочных
-эффектов, например, в~А-списках, то отвержение гипотезы автоматически и без
-проблем утилизирует и все её следствия. Но если для этого используются
-глобальные переменные, массивы {\itd}, то тогда за ненужной гипотезой
-приходится долго убирать, вспоминая, каким~же было состояние памяти в~момент
-формулировки гипотезы и какие его части можно откатить до старых значений, чтобы
-ничего не~сломать! Динамическая область видимости позволяет гарантировать
-существование переменной с~определённым значением на~время и только во~время
-вычислений, независимо от того, будут они успешны или нет. Это свойство также
-широко используется при обработке исключений.
+\ indexR {exceptions}
+\ indexR {search with return}
+Such a strategy can be effectively applied, for example, in an artificial
+intellect. In this case, first a hypothesis is put forward, then from it
+effects are produced. Once the system comes across a contradiction, then
+The hypothesis should be rejected and go to the next one. This is called \ term {search
+with ~ return}. If the consequences of the hypotheses are stored without the use of side effects
+effects, for example, in ~ A-lists, then rejecting the hypothesis automatically and without
+problems and recovers all of its consequences. But if this is used
+global variables, arrays { \ itd }, then for an unnecessary hypothesis
+it takes a long time to clean up, remembering what the state of memory was at the time
+hypotheses and what parts of it can be rolled back to old values, so that
+nothing ~ break! Dynamic scope allows you to guarantee
+the existence of a variable with a certain value for ~ time and only at the time
+calculations, regardless of whether they are successful or not. This property is also
+It is widely used when handling exceptions.
 
-\indexR{область видимости}
-\term{Область видимости} переменной "--- это, можно сказать, географическое
-понятие в~программе: местность, где переменная встречается и её можно
-использовать. В~чистом Scheme (не~обременённом полезными, но не~абсолютно
-необходимыми вещами вроде~\ic{let}) есть только одна связывающая форма:
-\ic{lambda}. Это единственная форма, вводящая новые переменные и предоставляющая
-им область видимости в~рамках определяемой функции. В~динамическом~же Лиспе
-область видимости в~принципе не~может быть ограничена функцией. Рассмотрим
-следующий пример:
+\ indexR {scope}
+\ term {Scope} of a variable "is --- it can be said, geographic
+concept in the program: locality where the variable occurs and it can be
+use. In a ~ pure Scheme (not burdened with useful, but not ~ absolutely
+necessary things like ~ \ ic {let}) there is only one binding form:
+\ ic {lambda}. This is the only form that introduces new variables and provides
+their scope within the framework of the function being defined. In the dynamic Lisp
+the scope in principle can not be limited by a function. Consider
+the following example:
 
-\begin{code:lisp}
-(define (foo x) (list x y))
+\ begin {code: lisp}
+(define (foo x) (list xy))
 (define (bar y) (foo 1991))
-\end{code:lisp}
+\ end {code: lisp}
 
-В~лексическом Лиспе переменная~\ic{y} в~\ic{foo}\footnote{О~происхождении
-\emph{foo} см.~\cite{ray91}.} "--- это всегда ссылка на глобальную
-переменную~\ic{y}, которая не~имеет никакого отношения к~\ic{y} внутри~\ic{bar}.
-В~динамическом~же Лиспе переменная~\ic{y} из \ic{bar} будет видима в~\ic{foo}
-внутри \ic{bar}, потому что в~момент вызова \ic{foo} переменная~\ic{y} уже
-находилась в~текущем окружении. Следовательно, если мы дадим глобальной \ic{y}
-значение~\ic{0}, то получим следующие результаты:
+In lexical Lisp, the variable ~ \ ic {y} in ~ \ ic {foo} \ footnote {About the origin
+\ emph {foo} see ~ \ cite {ray91}.} "is always a reference to the global
+variable ~ \ ic {y}, which has nothing to do with ~ \ ic {y} inside ~ \ ic {bar}.
+In the ~ dynamic Lisp variable, the variable \ ic {y} from \ ic {bar} will be visible in ~ \ ic {foo}
+inside \ ic {bar}, because at the time of the call \ ic {foo} the variable ~ \ ic {y} is already
+was in the current environment. Therefore, if we give a global \ ic {y}
+the value of ~ \ ic {0}, then we get the following results:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (define y 0)
-(list (bar 100) (foo 3)) |\is| ((1991 0) (3 0))   ; в~лексическом Лиспе
-(list (bar 100) (foo 3)) |\is| ((1991 100) (3 0)) ; в~динамическом Лиспе
-\end{code:lisp}
+(list (bar 100) (foo 3)) | \ is | ((1991 0) (3 0)); in lexical Lisp
+(list (bar 100) (foo 3)) | \ is | ((1991 100) (3 0)); in a ~ dynamic Lisp
+\ end {code: lisp}
 
-\indexR{свободные переменные!и области видимости}
-Заметьте, что в~динамическом Лиспе \ic{bar} понятия не~имеет о~том, что
-в~\ic{foo} используется её~же локальная переменная~\ic{y}, а~\ic{foo} не~знает
-о~том, в~каком именно окружении следует искать значение своей свободной
-переменной~\ic{y}. Просто \ic{bar} при вызове положила в~текущее окружение
-переменную~\ic{y}, а внутренняя функция \ic{foo} нашла её в~своём
-текущем окружении. Непосредственно перед выходом \ic{bar} уберёт свою~\ic{y} из
-окружения, и глобальная переменная~\ic{y} снова станет видна.
+\ indexR {free variables! and scopes}
+Note that in the ~ dynamic Lisp \ ic {bar} concept has no ~ that
+in ~ \ ic {foo} its local variable ~ \ ic {y} is used, and ~ \ ic {foo} does not know
+About what environment it is necessary to search for value of the free
+variable ~ \ ic {y}. Simply \ ic {bar} on call put in the ~ current environment
+variable ~ \ ic {y}, and the internal function \ ic {foo} found it in its ~
+the current environment. Immediately before the exit, \ ic {bar} will remove its ~ \ ic {y} from
+environment, and the global variable ~ \ ic {y} will again be visible.
 
-Конечно, если не~использовать свободные переменные, то нет особой разницы между
-динамической и лексической областями видимости.
+Of course, if you do not ~ use free variables, then there is not much difference between
+dynamic and lexical scopes.
 
-Лексическое связывание получило своё имя потому, что в~данном случае достаточно
-иметь только код функции, чтобы с~уверенностью отнести каждую используемую в~ней
-переменную к~одному из двух классов: или переменная находится внутри связывающей
-формы и является локальной, или~же это глобальная переменная. Это чрезвычайно
-просто: достаточно взять исходный код, взять карандаш (или мышку) и поставить
-его кончик на переменную, значение которой нас интересует, после чего следует
-вести карандаш справа налево, снизу вверх до тех пор, пока не~встретим первую
-связывающую форму. Динамическое~же связывание названо в~честь концепции
-\term{динамического времени жизни} переменных, которую мы будем рассматривать
-позже. \seePage[escape/forms/ssect:dynamic]
+Lexical binding got its name because in this case it is enough
+have only the function code to reliably relate each used in ~ it
+variable to one of two classes: either the variable is inside the binding
+form and is local, or ~ it is a global variable. This is extremely
+simply: just take the source code, take a pencil (or mouse) and put
+its tip on the variable, the value of which we are interested in, and then follows
+lead the pencil from right to left, from bottom to top until we meet the first
+binding form. Dynamic linking is named in honor of the concept
+\ term {dynamic lifetime} of variables, which we will consider
+later. \ seePage [escape / forms / ssect: dynamic]
 
-Scheme поддерживает только лексические переменные. {\CommonLisp} поддерживает
-оба типа с~одинаковым синтаксисом. Синтаксис {\EuLisp} и {\ISLisp} разделяет эти
-два типа переменных, и они находятся в~отдельных пространствах имён.
-\seePage[lisp1-2-omega/sect:namespaces]
+Scheme supports only lexical variables. { \ CommonLisp } supports
+Both types have the same syntax. The syntax { \ EuLisp } and { \ ISLisp } separates these
+two types of variables, and they are in ~ separate namespaces.
+\ seePage [lisp1-2-omega / sect: namespaces]
 
-\indexR{область видимости!конфликт имён}
-\indexR{переменные!сокрытие имён}
-\indexR{сокрытие переменных}
-\indexR{сокрытие переменных|seealso{области видимости}}
-Область видимости переменной может прерываться. Такое случается, когда одна
-переменная \term{скрывает} другую из"~за того, что обе имеют одинаковое имя.
-Лексические области видимости вкладываются друг в~друга, скрывая переменные
-с~совпадающими именами из внешних областей. Этот известный <<блокирующий>>
-порядок разрешения конфликтов унаследован от Алгола~60.
+\ indexR {scope! name conflict}
+\ indexR {variables! hiding names}
+\ indexR {hiding variables}
+\ indexR {hiding variables | seealso {scopes}}
+The scope of the variable may be interrupted. This happens when one
+the variable \ term {hides} the other from "~ because both have the same name.
+Lexical scopes are embedded in each other, hiding the variables
+with ~ coinciding names from outside areas. This well-known "blocking"
+the order of conflict resolution is inherited from Algol ~ 60.
 
-Под влиянием $\lambda$"=исчисления, в~честь которого названа специальная
-форма \ic{lambda}~\cite{per79}, \LISP~1.0 был сделан динамическим, но вскоре
-Джон~Маккарти осознал, что он ожидал получить от следующего выражения
-\ic{(2~3)}, а не~\ic{(1~3)}:
+Under the influence of $ \ lambda $ "= calculus, in whose honor the special
+the form \ ic {lambda} ~ \ cite {per79}, \ LISP ~ 1.0 was made dynamic, but soon
+John ~ McCarthy realized what he expected to get from the following expression
+\ ic {(2 ~ 3)}, and not ~ \ ic {(1 ~ 3)}:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (let ((a 1))
-  ((let ((a 2)) (lambda (b) (list a b)))
-   3 ) )
-\end{code:lisp}
+  ((let ((a 2)) (lambda (b) (list ab)))
+   3))
+\ end {code: lisp}
 
-\indexCS{function}{для замыканий}
-\indexCS{lambda}{как ключевое слово}
-Эта аномалия (не~осмелюсь назвать её ошибкой) была исправлена введением новой
-специальной формы~\ic{function}. Она принимала \ic{lambda}-форму и создавала
-\term{замыкание} "--- функцию, связанную с~окружением, в~котором она определена.
-При вызове замыкания вместо текущего окружения расширялось окружение
-определения, замкнутое внутри него. Вместе с~изменениями \ic{d.evaluate} и
-\ic{d.invoke}, форма~\ic{function}\footnote{Наша имитация не~совсем точна, так
-как существует немало диалектов Лиспа (вроде CLtL1~\cite{ste84}), где
-\ic{lambda} "--- это не~специальный оператор, а только ключевое слово-маркер
-вроде \ic{else} внутри \ic{cond} и \ic{case}. В~этом случае \ic{d.evaluate}
-может вообще не~знать ни~о~какой \ic{lambda}. Иногда даже накладываются
-ограничения на положение \ic{lambda}-форм, разрешающие им находиться только
-внутри \ic{function} и в~определениях функций.} выражается так:
+\ indexCS {function} {for closures}
+\ indexCS {lambda} {as a keyword}
+This anomaly (I do not dare call it a mistake) has been corrected by the introduction of a new
+special form ~ \ ic {function}. She took the \ ic {lambda} -form and created
+\ term {closure} "is a function associated with the environment in which it is defined.
+When the closure was called, the environment expanded instead of the current environment
+definitions, closed inside it. Together with the changes \ ic {d.evaluate} and
+\ ic {d.invoke}, form ~ \ ic {function} \ footnote {Our simulation is not exactly accurate, so
+as there are many Lisp dialects (like CLtL1 ~ \ cite {ste84}), where
+\ ic {lambda} "is not a special operator, but only a keyword marker
+like \ ic {else} inside \ ic {cond} and \ ic {case}. In this case, \ ic {d.evaluate}
+can not know ~ about any \ ic {lambda} at all. Sometimes even overlap
+restrictions on the position of \ ic {lambda} -forms, allowing them to be only
+inside \ ic {function} and in function definitions.} is expressed thus:
 
-\indexC{d.invoke}\indexC{d.make-function}\indexC{d.make-closure}
-\begin{code:lisp}[label=basics/repr-func/dyn-and-lex-bind/src:closure-eval]
+\ indexC {d.invoke} \ indexC {d.make-function} \ indexC {d.make-closure}
+\ begin {code: lisp} [label = basics / repr-func / dyn-and-lex-bind / src: closure-eval]
 (define (d.evaluate e env)
   (if (atom? e) ...
       (case (car e)
         ...
-        ((function)   ; Синтаксис: \ic{(function (lambda \ii{аргументы} \ii{тело}))}
-         (let* ((f   (cadr e))
-                (fun (d.make-function (cadr f) (cddr f) env)) )
-           (d.make-closure fun env) ) )
+        ((function); Syntax: \ ic {(function (lambda \ ii {arguments} \ ii {body}))}
+         (let * ((f (cadr e))
+                (fun (d.make-function (cadr f) (cddr f) env)))
+           (d.make-closure fun env)))
         ((lambda) (d.make-function (cadr e) (cddr e) env))
-        (else     (d.invoke (d.evaluate (car e) env)
+        (else (d.invoke (d.evaluate (car e) env)
                             (evlis (cdr e) env)
-                            env )) ) ) )
+                            env)))))
 
 (define (d.invoke fn args env)
   (if (procedure? fn)
       (fn args env)
-      (wrong "Not a function" fn) ) )
+      (wrong "Not a function" fn)))
 
 (define (d.make-function variables body env)
-  (lambda (values current.env)
-    (eprogn body (extend current.env variables values)) ) )
+  (lambda (values ​​current.env)
+    (eprogn body (extend current.env variables values))))
 
 (define (d.make-closure fun env)
-  (lambda (values current.env)
-    (fun values env) ) )
-\end{code:lisp}
+  (lambda (values ​​current.env)
+    (fun values ​​env)))
+\ end {code: lisp}
 
-\indexR{переменные!специальные}
-\indexC{special}
-Но это ещё не~конец всей истории. \ic{function} "--- это лишь костыль, на
-который опиралась хромая реализация Лиспа. С~созданием первых компиляторов стало
-ясно, что с~точки зрения производительности у~лексической области видимости есть
-(ожидаемое при компиляции) преимущество: можно сгенерировать код для более-менее
-прямого доступа к~любой переменной, а не~динамически отыскивать её значение
-заново каждый раз. Тогда по умолчанию стали делать все переменные лексическими,
-за исключением тех, которые были явно помечены как динамические или, как тогда
-их называли, \term{специальные}. Выражение \ic{(declare (special~\ii{x}))}
-являлось командой компиляторам \LISP~1.5, \CommonLisp, Maclisp и~других,
-говорившей, что переменная~\ii{x} ведёт себя <<особенно>>.
+\ indexR {special variables}
+\ indexC {special}
+But this is not the end of the whole story. \ ic {function} "is just a crutch, on
+which was based on the lame implementation of Lisp. With ~ the creation of the first compilers has become
+It is clear that from the point of view of productivity in a lexical field of view, there is
+(expected at compilation) advantage: it is possible to generate the code for more or less
+direct access to ~ any variable, and not ~ dynamically retrieve its value
+anew each time. Then by default they began to make all variables lexical,
+except for those that were explicitly labeled as dynamic or, as then
+they were called \ term {special}. The expression \ ic {(declare (special ~ \ ii {x}))}
+was the command of the compilers \ LISP ~ 1.5, \ CommonLisp , Maclisp and ~ others,
+saying that the variable ~ \ ii {x} behaves "especially".
 
-\indexR{ссылочная прозрачность}
-Эффективность была не~единственной причиной принятия такого решения. Другой
-причиной была потеря \term{ссылочной прозрачности} (\english{referential
-transparency}). Ссылочная прозрачность "--- это свойство языка, заключающееся
-в том, что замена в~программе любого выражения его эквивалентом никак не~изменит
-поведение этой программы (оба варианта программы или вернут одно и то~же
-значение, или вместе застрянут в~бесконечном цикле). Например:
+\ indexR {reference transparency}
+Efficiency was not the only reason for such a decision. Other
+the reason was the loss of \ term {referential transparency} ( \ english {referential
+transparency}). Reference transparency "is a property of the language,
+in that the replacement in the program of any expression by its equivalent does not change anything
+behavior of this program (both versions of the program or return the same thing
+value, or together stuck in an infinite loop). For example:
 
-\begin{code:lisp}
-(let ((x (lambda () 1))) (x)) |\eq| ((let ((x (lambda () 1))) x)) |\eq| 1
-\end{code:lisp}
+\ begin {code: lisp}
+(let ((x (lambda () 1))) (x)) | \ eq | ((let ((x (lambda () 1))) x)) | \ eq | 1
+\ end {code: lisp}
 
-В~общем случае ссылочная прозрачность теряется, если язык позволяет побочные
-эффекты. Чтобы она сохранилась и при наличии побочных эффектов, необходимо
-точнее определить понятие эквивалентных выражений. Scheme обладает ссылочной
-прозрачностью, если не~использовать присваивания, функции с~побочными эффектами
-и продолжения. \seeEx[escape/ex:crazy-cc] Это свойство желаемо и в~наших
-программах, если мы хотим сделать их по-настоящему повторно используемыми, как
-можно менее зависимыми от контекста использования.
+In the general case, reference transparency is lost if the language allows side
+effects. To keep it and with side effects, it is necessary
+more precisely define the concept of equivalent expressions. Scheme has a reference
+transparency, if not ~ use assignments, functions with side effects
+and continuation. \ seeEx [escape / ex: crazy-cc] This property is desired in our
+programs, if we want to make them really reusable, like
+can be less dependent on the context of use.
 
-\indexR{переменные!безымянные}
-\indexR{альфа@$\alpha$-конверсия}
-Локальные переменные функций вроде \ic{(lambda (u) (+~u~u))} иногда называются
-\emph{безымянными}. Их имена ничего не~значат и могут быть абсолютно
-произвольными. Функция \ic{(lambda (n347) (+~n347~n347))} "--- это та~же
-самая\footnote{В~терминах $\lambda$"=исчисления подобная замена имён называется
-$\alpha$"=конверсией.} функция, что и \ic{(lambda (u) (+~u~u))}.
+\ indexR {variables! nameless}
+\ indexR {alpha @ $ \ alpha $ -conversion}
+Local variables of functions like \ ic {(lambda (u) (+ ~ u ~ u))} are sometimes called
+\ emph {nameless}. Their names mean nothing and can be absolutely
+arbitrary. The function \ ic {(lambda (n347) (+ ~ n347 ~ n347))} "is the same
+most \ footnote {In terms of $ \ lambda $ "= calculus, a similar name substitution is called
+$ \ alpha $ "= conversion.} a function such that \ ic {(lambda (u) (+ ~ u ~ u))}.
 
-Мы ожидаем, что в~языке будет сохраняться этот инвариант. Но это невозможно
-в~динамическом Лиспе. Рассмотрим следующий пример:
+We expect that this invariant will remain in ~ language. But this is impossible
+in a ~ dynamic Lisp. Consider the following example:
 
-\indexC{map}
-\begin{code:lisp}
-(define (map fn l)  ; или \ic{mapcar}, как кому нравится
+\ indexC {map}
+\ begin {code: lisp}
+(define (map fn l); or \ ic {mapcar}, as anyone likes
   (if (pair? l)
       (cons (fn (car l)) (map fn (cdr l)))
-      '() ) )
+      '()))
 
-(let ((l '(a b c)))
-  (map (lambda (x) (list-ref l x))
+(let ((l '(abc)))
+  (map (lambda (x) (list-ref lx))
        '(2 1 0)))
-\end{code:lisp}
+\ end {code: lisp}
 
-(Функция~\ic{(list-ref $\ell$ \ii{n})} возвращает \ii{n}"~й~элемент
-списка~$\ell$.)
+(The function ~ \ ic {(list-ref $ \ ell $  \ ii {n})} returns the \ ii {n} "~ th ~ element
+list ~ $ \ ell $ .)
 
-В~Scheme мы~бы получили \ic{(c b a)}, но в~динамическом Лиспе результатом будет
-\ic{(0 0 0)}! Причина: свободная переменная~\ic{l} в~функции \ic{(lambda (x)
-(list-ref l x))}, имя которой уже занято локальной переменной~\ic{l}
-в~\ic{map}.
+In ~ Scheme we would get \ ic {(cba)}, but in dynamic Lisp, the result is
+\ ic {(0 0 0)}! Reason: the free variable ~ \ ic {l} in the function \ ic {(lambda (x)
+(list-ref lx))}, whose name is already occupied by the local variable ~ \ ic {l}
+in ~ \ ic {map}.
 
-Это затруднение можно решить, просто изменив конфликтующие имена. Например,
-достаточно будет переименовать какую-нибудь из двух~\ic{l}. Например, ту,
-которая внутри \ic{map}, потому что это более разумно. Но какое имя выбрать,
-чтобы эта проблема не~возникла снова? Если приписывать спереди к~имени каждой
-переменной номер паспорта программиста, а сзади "--- текущее \UNIX-время, то
-это, конечно, значительно снизит вероятность коллизий, но читабельность программ
-будет оставлять желать лучшего.
+This difficulty can be solved simply by changing the conflicting names. For example,
+it will suffice to rename one of the two ~ \ ic {l}. For example,
+which is inside \ ic {map}, because it is more reasonable. But what name to choose,
+so that this problem does not arise again? If you assign in front to the ~ name of each
+variable number of the programmer's passport, and behind "--- current \ UNIX- time, then
+this, of course, will significantly reduce the likelihood of collisions, but the readability of programs
+will leave much to be desired.
 
-В~начале восьмидесятых годов сложилась довольно неприятная ситуация: студентов
-учили Лиспу на примере интерпретаторов, но их понимание областей видимости
-отличалось от понимания компиляторов. В~1975~году Scheme \cite{ss75} показал,
-что интерпретатор и компилятор возможно примирить, поместив обоих в~мир, где все
-переменные лексические. {\CommonLisp} забил последний гвоздь в~гроб этой
-проблемы, постановив, что \emph{хорошее} понимание "--- это понимание
-компилятора, а для него удобнее лексические переменные. Интерпретатор должен
-был подчиниться новым правилам. Растущий успех Scheme и других функциональных
-языков, вроде~ML и компании, популяризовал новый подход сначала в~языках
-программирования, а затем и в~умах людей.
+In the early eighties there was a rather unpleasant situation: students
+Lispu was taught by the example of interpreters, but their understanding of scopes
+differed from compilers' understanding. In ~ 1975 ~ year Scheme \ cite {ss75} has shown,
+that the interpreter and the compiler can be reconciled by placing both in a world where everything
+lexical variables. { \ CommonLisp } scored the last nail in the ~ coffin of this
+problems, deciding that the \ emph {good} understanding "is an understanding
+compiler, and for it lexical variables are more convenient. The interpreter must
+was to obey the new rules. The growing success of Scheme and other functional
+languages ​​like ~ ML and the company, popularized the new approach first in ~ languages
+programming, and then in the minds of people.
 
 
-\subsection{Дальнее~и~ближнее связывание}%
-\label{basics/representing-functions/ssect:deep-or-shallow}
+\ subsection {Far ~ and ~ short-range binding} %
+\ label {basics / representing-functions / ssect: deep-or-shallow}
 
-\indexR{дальнее (deep) связывание}
-\indexR{связывание!дальнее (deep)}
-\indexCS{lookup}{стоимость}
-Но не~всё так просто заканчивается. Разработчики языков нашли способы ускорить
-поиск значений динамических переменных. Если окружения представлены
-ассоциативными списками, то время на поиск значения переменной (стоимость вызова
-\ic{lookup}) линейно зависит от длины списка.\footnote*{К~счастью, статистика
-показывает, что переменные, располагающиеся ближе к~началу списка, используются
-чаще тех, что находятся глубоко внутри. Кстати, ещё стоит отметить, что
-лексические окружения в~среднем меньше по размеру, чем динамические, так как
-последним необходимо хранить все переменные, участвующие в~вычислениях, включая
-одноимённые \cite{bak92a}.} Такой подход называется \term{глубоким} или
-\term{дальним связыванием} (deep binding), так как значения динамических
-переменных обычно располагаются на некотором удалении от текущего локального
-окружения.
+\ indexR {deep link}
+\ indexR {link! far (deep)}
+\ indexCS {lookup} {cost}
+But it's not that easy. Language developers have found ways to speed up
+search for values ​​of dynamic variables. If the environments are represented
+associative lists, the time to search for the value of the variable (call cost
+\ ic {lookup}) depends linearly on the length of the list. \ footnote * {Fortunately, statistics
+shows that variables that are closer to the beginning of the list are used
+more often those that are deep inside. By the way, it is worth noting that
+lexical environments are on the average smaller in size than dynamic ones, since
+The latter need to store all the variables involved in the ~ computations, including
+of the same name \ cite {bak92a}.} This approach is called \ term {deep} or
+\ term {deep binding}, since the values ​​of the dynamic
+variables are usually located at some distance from the current local
+environment.
 
-\indexR{ближнее (shallow) связывание}
-\indexR{связывание!ближнее (shallow)}
-\indexE{Cval}
-Существует и другой метод, называемый \term{поверхностным} или \term{ближним
-связыванием} (shallow binding). Суть его в~том, что переменная напрямую связана
-с~местом, где хранится её значение в~текущий момент, без привязки к~окружению.
-Проще всего это реализовать, положив это значение в~специальное поле символа,
-соответствующего этой переменной; это поле называют \ic{Cval} или \term{ячейкой
-значения} (value cell). В~таком случае стоимость \ic{lookup} постоянна или около
-того: требуется лишь одна косвенная адресация и, может быть, сдвиг. Так как
-бесплатный сыр бывает только в~мышеловке, то стоит отметить, что вызов функции
-при использовании этого метода выходит дороже, потому что требуется сначала
-где"~то сохранить старые значения аргументов, затем записать новые значения
-в~поля соответствующих символов. А~потом, что самое важное, после выхода из
-функции старые значения в~символах необходимо восстановить обратно, а это может
-помешать оптимизации хвостовой рекурсии. (Хотя есть варианты: \cite{sj93}.)
+\ indexR {shallow} binding}
+\ indexR {close-up (shallow)}
+\ indexE {Cval}
+There is another method, called \ term {surface} or \ term {neighbor
+(shallow binding). The essence of it is that the variable is directly related
+with the place where its value is stored in the current moment, without reference to the environment.
+The easiest way to do this is to put this value in a special character field,
+corresponding to this variable; this field is called \ ic {Cval} or \ term {cell
+values} (value cell). In this case, the cost of \ ic {lookup} is constant or about
+Moreover: only one indirect addressing and, perhaps, a shift is required. As
+Free cheese is only in the ~ mousetrap, it is worth noting that the function call
+When using this method, it is more expensive, because it is required first
+where "~ then store the old values ​​of the arguments, then write new values
+in the fields of the corresponding symbols. And then, most importantly, after leaving
+function, the old values ​​in ~ characters must be restored back, and this can
+prevent optimization of tail recursion. (Although there are options: \ cite {sj93}.)
 
-Изменив структуру окружений, мы сможем частично проэмулировать\footnote{Здесь мы
-не~реализуем присваивание переменным, захваченным замыканиями. Об~этом можно
-почитать в~\cite{bcsj86}.} ближнее связывание. Но с~оговорками: список
-аргументов не~может быть точечным (так будет легче его разбирать) и мы не~будем
-проверять арность функций. Новые функции будем обозначать префиксом \ic{s.},
-чтобы не~путать их с~другими.
+Changing the structure of the environment, we can partially emulate \ footnote {Here we are
+we do not implement assignments to variables captured by closures. About this you can
+read in ~ \ cite {bcsj86}.} short-range binding. But with a ~ caveat: list
+arguments can not be ~ point (it will be easier to disassemble it) and we will not ~
+check the arity of functions. The new functions will be denoted by the prefix \ ic {s.},
+to not confuse them with others.
 
-\indexC{s.make-function}
-\indexC{s.lookup}
-\indexC{s.update"!}
-\begin{code:lisp}
+\ indexC {s.make-function}
+\ indexC {s.lookup}
+\ indexC {s.update "!}
+\ begin {code: lisp}
 (define (s.make-function variables body env)
-  (lambda (values current.env)
-    (let ((old-bindings
+  (lambda (values ​​current.env)
+    (let ((old-bindings)
            (map (lambda (var val)
                   (let ((old-value (getprop var 'apval)))
                     (putprop var 'apval val)
-                    (cons var old-value) ) )
+                    (cons var old-value)))
                 variables
-                values ) ))
+                values)))
       (let ((result (eprogn body current.env)))
-        (for-each (lambda (b) (putprop (car b) 'apval (cdr b)))
-                  old-bindings )
-        result ) ) ) )
+        (for-each (lambda (b) (putprop (car b) apval (cdr b)))
+                  old-bindings)
+        result))))
 
 (define (s.lookup id env)
-  (getprop id 'apval) )
+  (getprop id 'apval))
 
 (define (s.update! id env value)
-  (putprop id 'apval value) )
-\end{code:lisp}
+  (putprop id 'apval value))
+\ end {code: lisp}
 
-\indexC{putprop}\indexC{getprop}
-В~Scheme функции \ic{putprop} и \ic{getprop} не~входят в~стандарт, так как здесь
-не~любят неэффективные глобальные побочные эффекты, но тем не~менее, даже
-в~\cite{as85} есть аналогичные \ic{put} и~\ic{get}.
-\seeEx[lisp1-2-omega/ex:write-put/get-prop]
+\ indexC {putprop} \ indexC {getprop}
+In the ~ Scheme, the functions \ ic {putprop} and \ ic {getprop} are not included in the ~ standard, since here
+do not like ineffective global side effects, but none the less, even
+in ~ \ cite {as85} there are similar \ ic {put} and ~ \ ic {get}.
+\ seeEx [lisp1-2-omega / ex: write-put / get-prop]
 
-\indexR{списки свойств}
-\indexR{символы!списки свойств}
-\indexE{P-список}
-\indexR{хеш-таблицы}
-С~помощью этих функций мы эмулируем наличие у~символов поля,\footnote*{Это поле
-названо в~честь \ic{apval} из~\cite{mae+62}. \seePage[lisp1-2-omega/par:apval]
-Тогда значения полей действительно хранились в~наивных P"~списках.} где хранится
-значение одноимённой переменной. Независимо от их настоящей реализации,%
-\footnote*{Эти функции проходят по списку свойств символа (его P"~списку,
-от~property) до тех пор, пока не~найдут нужное. Скорость поиска, соответственно,
-линейно зависит от длины списка, если только не~применяются хеш-таблицы.} будем
-считать, что они выполняются за постоянное время.
+\ indexR {property lists}
+\ indexR {characters! lists of properties}
+\ indexE {P-list}
+\ indexR {hash table}
+Using these functions, we emulate the presence of the ~ character field, \ footnote * {This field
+is named in honor of \ ic {apval} from ~ \ cite {mae + 62}. \ seePage [lisp1-2-omega / par: apval]
+Then the field values ​​were actually stored in ~ naive P ~ ~ lists.} Where stored
+value of the variable of the same name. Regardless of their current implementation, %
+\ footnote * {These functions pass through the list of properties of the character (its P "~ list,
+from ~ property) until they find the right one. The search speed, respectively,
+linearly depends on the length of the list, unless ~ hash tables are used.}
+consider that they are performed for a constant time.
 
-Заметьте, что в~этой реализации абсолютно не~используется окружение определения
-\ic{env}. Поэтому для поддержки замыканий нам потребуется изменить реализацию
-\ic{make-closure}, так как она теперь не~имеет доступа к~окружению определения
-(ввиду его отсутствия). При создании замыкания необходимо просмотреть тело
-функции, выделить все свободные переменные и правильно их сохранить внутри
-замыкания. Мы реализуем это позже.
+Note that in this implementation, the definition environment
+\ ic {env}. Therefore, to support closures, we need to change the implementation
+\ ic {make-closure}, since it does not now have ~ access to the environment of the definition
+(in view of his absence). When creating a closure, you need to view the body
+functions, highlight all free variables and correctly store them inside
+closure. We will implement this later.
 
-\indexE{rerooting}
-Дальнее связывание облегчает смену окружений и многозадачность, теряя в~скорости
-поиска переменных. Ближнее связывание ускоряет поиск переменных, но теряет
-в~скорости вызова функций. Генри~Бейкеру \cite{bak78} удалось объединить эти два
-подхода в~технику под названием \term{rerooting}.
+\ indexE {rerooting}
+Remote binding makes it easier to change environments and multitask, losing speed
+search for variables. Near binding speeds up the search for variables, but loses
+in the speed of calling functions. Henry ~ Baker \ cite {bak78} managed to combine the two
+approach in a technique called \ term {rerooting}.
 
-Наконец, не~забывайте, что ближнее и дальнее связывание "--- это лишь способы
-реализации, они никак не~влияют на само понятие связывания.
+Finally, do not forget that the near and far link "--- these are only ways
+implementation, they have no effect on the very concept of binding.
 
 
-\section{Глобальное окружение}\label{basics/sect:global-environment}
+\ section {Global environment} \ label {basics / sect: global-environment}
 
-\indexR{библиотека!функций}
-\indexR{Лисп!примитивы}
-Пустое глобальное окружение "--- это печально, поэтому большинство лисп-систем
-предоставляют \emph{библиотеки} функций. Например, в~глобальном окружении
-{\CommonLisp} (CLtL1) около 700~функций, у~{\LeLisp} их более~1500,
-у~{\ZetaLisp} "--- более~10\,000. Без библиотек Лисп был~бы лишь прикладным
-$\lambda$"=исчислением, в~котором нельзя даже распечатать полученные результаты.
-Библиотеки очень важны для конечного пользователя. Специальные формы "--- это
-строительные кирпичики для разработчиков интерпретаторов, но для конечного
-пользователя такими кирпичиками являются функции библиотек. По"~видимому, именно
-отсутствие в~чистом Лиспе таких банальных вещей вроде библиотеки
-тригонометрических функций прочно укоренило мысль о непригодности Лиспа для
-<<серьёзных программ>>. Как говорится в~\cite{sla61}, возможность символьного
-интегрирования или дифференцирования "--- это, конечно, замечательно, но кому
-нужен язык, где нет даже синуса или тангенса?
+\ indexR {library! functions}
+\ indexR {Lisp primitives}
+Empty global environment "--- this is sad, so most of the LISP systems
+provide \ emph {library} functions. For example, in a ~ global environment
+{ \ CommonLisp } (CLtL1) about 700 ~ functions, in ~ { \ LeLisp } there are more than ~ 1500,
+y ~ { \ ZetaLisp } "--- more than ~ 10 \, 000. Without libraries, Lisp was only an applied
+$ \ lambda $ "= calculus, in which you can not even print the results.
+Libraries are very important for the end user. Special forms "--- this
+building bricks for interpreter developers, but for the final
+user of these bricks are the functions of libraries. By "apparently, it is
+The absence in the pure Lisp of such banal things like the library
+trigonometrical functions firmly entrenched the idea of ​​the unsuitability of Lisp for
+<< serious programs >>. As stated in ~ \ cite {sla61}, the possibility of a character
+integration or differentiation "--- this, of course, is wonderful, but to whom
+need a language where there is not even a sinus or tangent?
 
-Мы ожидаем, что все привычные функции вроде \ic{cons}, \ic{car} {\itp} будут
-доступны в~глобальном окружении. Также можно туда поместить несколько простых
-констант вроде логических значений и пустого списка.
+We expect that all the familiar functions like \ ic {cons}, \ ic {car} { \ itp } will be
+Available in a ~ global environment. You can also put a few simple
+constants like logical values ​​and an empty list.
 
-Для этого мы определим пару макросов. Исключительно для удобства, потому что мы
-о~них ещё даже не~говорили.\footnote*{Согласитесь, было~бы странным втискивать
-всю книгу в~первую главу.} Макросы "--- это довольно сложная и важная вещь сами
-по себе, так что им посвящена собственная глава. \seePage[chapter:macros]
+To do this, we define a pair of macros. Exclusively for convenience, because we
+they have not even been talked about ~ yet. \ footnote * {Agree, it would be strange to squeeze
+the whole book in the first chapter.} Macros "--- this is a fairly complex and important thing themselves
+on their own, so that they are dedicated to their own chapter. \ seePage [chapter: macros]
 
-Эти два макроса облегчат наполнение глобального окружения. Само глобальное
-окружение является расширением начального окружения \ic{env.init}.
+These two macros will facilitate the filling of the global environment. The most global
+The environment is an extension of the initial environment \ ic {env.init}.
 
-\ForLayout{display}{\begingroup
-\lstset{aboveskip=\smallskipamount, belowskip=\smallskipamount}}
+\ ForLayout {display} { \ begingroup
+\ lstset {aboveskip = \ smallskipamount , belowskip = \ smallskipamount }}
 
-\indexC{env.global}
-\indexC{definitial}
-\indexC{defprimitive}
-\begin{code:lisp}
+\ indexC {env.global}
+\ indexC {definitial}
+\ indexC {defprimitive}
+\ begin {code: lisp}
 (define env.global env.init)
-|\ForLayout{display}{\vskip-0.4\baselineskip}|
+| | \ ForLayout {display} { \ vskip -0.4 \ baselineskip } |
 (define-syntax definitial
   (syntax-rules ()
     ((definitial name)
-     (begin (set! env.global (cons (cons 'name 'void) env.global))
-            'name ) )
+     (begin (set! env.global (cons (cons 'name' void) env.global))
+            'name))
     ((definitial name value)
-     (begin (set! env.global (cons (cons 'name value) env.global))
-            'name ) ) ) )
-|\ForLayout{display}{\vskip-0.4\baselineskip}|
+     (begin (set! env.global (cons (cons' name value) env.global))
+            'name))))
+| | \ ForLayout {display} { \ vskip -0.4 \ baselineskip } |
 (define-syntax defprimitive
   (syntax-rules ()
     ((defprimitive name value arity)
      (definitial name
         (lambda (values)
           (if (= arity (length values))
-              (apply value values)      ; Родная \ic{apply} Scheme
-              (wrong "Incorrect arity" (list 'name values)|\:|)|\:|)|\:|)|\:|)|\:|)|\:|)|\:|)
-\end{code:lisp}
+              (apply value values); Native \ ic {apply} Scheme
+              (wrong "Incorrect arity" (list 'name values) | \: |) | \: |) | \: |) | \: |) | \: |) | \: |) | \: |)
+\ end {code: lisp}
 
-\indexC{the-false-value}
-Несмотря на то, что стандарт Scheme этого не~требует, мы определим несколько
-полезных констант. Заметим, что \ic{t} "--- это переменная в~определяемом Лиспе,
-а \ic{\#t} "--- это значение из определяющего Лиспа. Оно подходит, так как любое
-значение, не~совпадающее с~\ic{the-false-value}, является \term{истиной}.
+\ indexC {the-false-value}
+Despite the fact that the Scheme standard does not require this, we will define several
+useful constants. Note that \ ic {t} "is a variable in the Lisp defined,
+and \ ic { \ # # t} "is the value from the defining Lisp. It is suitable, since any
+A value that does not coincide with ~ \ ic {the-false-value} is \ term {true}.
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (definitial t #t)
 (definitial f the-false-value)
 (definitial nil '())
-\end{code:lisp}
+\ end {code: lisp}
 
-\ForLayout{display}{\endgroup}
+\ ForLayout {display} { \ endgroup }
 
-\indexR{синтаксис!для \protect\ic{\#t} и~\ic{\#f}}
-\indexR{логические значения}
-Хотя это удобно "--- иметь глобальные переменные с~настоящими объектами для
-данных сущностей, но есть и другое решение: особый синтаксис. Scheme использует
-\ic{\#t} и \ic{\#f}, подставляя вместо них логические \term{истину} и
-\term{ложь}. В~этом есть определённый смысл:
+\ indexR {syntax! for \ protect \ ic { \ # t} and ~ \ ic { \ # f}}
+\ indexR {Boolean values}
+Although it is convenient "--- to have global variables with real objects for
+data entities, but there is another solution: a special syntax. Scheme uses
+\ ic { \ # t} and \ ic { \ # # f}, substituting for them logical \ term {truth} and
+\ term {false}. In this there is a definite meaning:
 
-\begin{enumerate}
-  \item Они всегда видимы: \ic{\#t} означает \term{истину} в~любом
-        контексте, даже тогда, когда локальная переменная
-        названа~\ic{t}.
+\ begin {enumerate}
+  \ item They are always visible: \ ic { \ # t} means \ term {truth} in any
+        context, even when the local variable
+        is called ~ \ ic {t}.
 
-  \item Значение~\ic{\#t} невозможно изменить, но многие интерпретаторы
-        позволят изменить значение глобальной переменной~\ic{t}.
-\end{enumerate}
+  \ item The value of \ ic { \ # t} can not be changed, but many interpreters
+        will change the value of the global variable ~ \ ic {t}.
+\ end {enumerate}
 
-Например, выражение~\ic{(if t 1 2)} вернёт~\ic{2}, если оно вычисляется
-в~следующем окружении: \ic{(let ((t \#f)) (if t 1 2))}.
+For example, the expression ~ \ ic {(if t 1 2)} returns ~ \ ic {2} if it is evaluated
+in the following environment: \ ic {(let ((t \ # f)) (if t 1 2))}.
 
-\indexC{eq?}
-Существует много способов ввести такой синтаксис. Наиболее простой способ "---
-это вшить значения \ic{t} и~\ic{f} в~вычислитель:
+\ indexC {eq?}
+There are many ways to enter such a syntax. The simplest way is "---
+this is to insert the values ​​of \ ic {t} and ~ \ ic {f} into the calculator:
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (define (evaluate e env)
   (if (atom? e)
       (cond ((eq? e 't) #t)
@@ -1667,244 +1667,244 @@ $\lambda$"=исчислением, в~котором нельзя даже ра�
             ...
             ((symbol? e) (lookup e env))
             ...
-            (else (wrong "Cannot evaluate" exp)) )
-      ... ) )
-\end{code:lisp}
+            (else (wrong "Can not evaluate" exp)))
+      ...))
+\ end {code: lisp}
 
-\indexR{инлайнинг!функций}
-\indexR{встраивание!функций}
-\indexR{функции!встраиваемые}
-\indexR{связывание!изменяемое}
-\indexR{связывание!неизменяемое}
-Также мы могли~бы ввести понятия \term{изменяемого} и \term{неизменяемого}
-связывания. Неизменяемые переменные отвергаются присваиванием. Ничто и никогда
-не~сможет изменить значение неизменяемой переменной. Такая концепция существует,
-хоть и не~всегда явно, во~многих системах. Например, существуют так называемые
-\term{инлайн-функции} (также известные как \term{подставляемые} или
-\term{встраиваемые}), вызов которых можно полностью заменить прямой подстановкой
-их тела. \seePage[fast/fast/integrating/par:inlining]
+\ indexR {inlining of functions}
+\ indexR {embedding!} functions
+\ indexR {functions! built-in}
+\ indexR {bind! variable}
+\ indexR {bind! unchanged}
+We could also introduce the concepts of \ term {variable} and \ term {immutable}
+binding. Immutable variables are rejected by assignment. Nothing and never
+can not change the value of an immutable variable. Such a concept exists,
+although not always ~ explicitly, in many systems. For example, there are so-called
+\ term {inline functions} (also known as \ term {substitutions} or
+\ term {recessed}), whose call can be completely replaced by direct substitution
+their bodies. \ seePage [fast / fast / integrating / par: inlining]
 
-Чтобы можно было спокойно подставить вместо \ic{(car~x)} код функции,
-возвращающей левый элемент точечной пары~\ic{x}, необходимо быть абсолютно
-уверенным в~том, что значение глобальной переменной~\ic{car} никогда не~менялось
-и не~поменяется в~будущем. Посмотрите, какая беда случается, если это не~так:
+In order to be able to substitute the function code instead of \ ic {(car ~ x)},
+which returns the left element of the point pair ~ \ ic {x}, it is necessary to be absolutely
+sure that the value of the global variable ~ \ ic {car} never changed
+and will not change in the future. Look at what kind of trouble happens, if it is not ~ so:
 
-\begin{code:lisp}
-(set! my-global (cons 'c 'd))
-   |\is| (c . d)
+\ begin {code: lisp}
+(set! my-global (cons 'c' d))
+   | | \ is | (d)
 (set! my-test (lambda () (car my-global)))
-   |\is| #<MY-TEST procedure>
+   | | \ is | # <MY-TEST procedure>
 (begin (set! car cdr)
-       (set! my-global (cons 'a 'b))
-       (my-test) )
-   |\is| |\ii{?????}|
-\end{code:lisp}
+       (set! my-global (cons 'a' b))
+       (my-test))
+   | | \ is | | | \ ii {?????} |
+\ end {code: lisp}
 
-К~счастью, в~результате может получиться только \ic{a} или~\ic{b}. Если
-\ic{my-test} использует значение~\ic{car} на~момент определения, то мы
-получим~\ic{a}. Если~же \ic{my-test} будет использовать текущее
-значение~\ic{car}, то ответом будет~\ic{b}. Полезным будет также сравнить в~этом
-аспекте \ic{my-test} и \ic{my-global}: обычно первый вариант поведения ожидается
-от \ic{my-test} при использовании компилятора, тогда как для \ic{my-global}
-нормальным считается именно второй вариант.
-\seePage[lisp1-2-omega/recusion/simple/code:redefine]
+Fortunately, only \ ic {a} or ~ \ ic {b} can result in the result . If
+\ ic {my-test} uses the value ~ \ ic {car} at the time of determination, then we
+we obtain ~ \ ic {a}. If ~ ic \ ic {my-test} will use the current
+the value of ~ \ ic {car}, then the answer is ~ \ ic {b}. It will also be useful to compare this
+aspect of \ ic {my-test} and \ ic {my-global}: usually the first version of the behavior is expected
+from \ ic {my-test} when using the compiler, whereas for \ ic {my-global}
+the second option is considered to be normal.
+\ seePage [lisp1-2-omega / recusion / simple / code: redefine]
 
-\indexC{foo}\indexC{bar}\indexC{fib}\indexC{fact}
-Также мы добавим несколько рабочих переменных\footnote{К~сожалению, сейчас они
-ещё и инициализируются. Эта ошибка будет исправлена позже.} в~глобальное
-окружение, так как сейчас у~нас нет способа динамически создавать переменные.
-По статистике, предлагаемые имена составляют приблизительно {96,037\,\%}
-используемых при тестировании свеженаписанных интерпретаторов.
+\ indexC {foo} \ indexC {bar} \ indexC {fib} \ indexC {fact}
+Also we will add some working variables \ footnote {Unfortunately, now they
+also initialized. This error will be fixed later.} In ~ global
+environment, since now we have no way to dynamically create variables.
+According to statistics, the proposed names are approximately {96,037 \, \% }
+Used when testing newly written interpreters.
 
-%\ForLayout{display}{\begingroup
-%\lstset{aboveskip=\smallskipamount, belowskip=\smallskipamount}}
+% \ ForLayout {display} {\ begingroup
+% \ lstset {aboveskip = \ smallskipamount, belowskip = \ smallskipamount}}
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (definitial foo)
 (definitial bar)
 (definitial fib)
 (definitial fact)
-\end{code:lisp}
+\ end {code: lisp}
 
-%\ForLayout{display}{\endgroup}
+% \ ForLayout {display} {\ endgroup}
 
-Наконец, определим несколько примитивных функций (не~все, потому что такие
-полные списки "--- это хорошее снотворное). Главная сложность состоит
-в~соединении механизмов вызова функций определяемого и определяющего языков.
-Зная, что аргументы собираются нашим интерпретатором в~список, достаточно просто
-применить
-к~нему \ic{apply}.\footnote*{Можно только порадоваться за наш выбор не~называть
-\ic{invoke} <<\ic{apply}>>.} Заметьте, что арность функций будет соблюдаться,
-так как мы включили проверку в~определение макроса~\ic{defprimitive}.
+Finally, we define several primitive functions (not ~ all, because such
+complete lists "--- this is a good sleeping pills.) The main difficulty is
+in the combination of the mechanisms of calling the functions of the defined and defining languages.
+Knowing that arguments are collected by our interpreter in a ~ list, it is quite simple
+apply
+to it \ ic {apply}. \ footnote * {You can only be happy for our choice not to call it
+\ ic {invoke} << \ ic {apply} >>.} Note that the arity of the functions will be respected,
+since we included the check in the ~ macro definition ~ \ ic {defprimitive}.
 
-\begin{code:lisp}
+\ begin {code: lisp}
 (defprimitive cons cons 2)
 (defprimitive car car 1)
 (defprimitive set-cdr! set-cdr! 2)
 (defprimitive + + 2)
 (defprimitive eq? eq? 2)
-(defprimitive < < 2)
-\end{code:lisp}
+(defprimitive <<2)
+\ end {code: lisp}
 
 
-\section{Запускаем интерпретатор}\label{basics/sect:starting-the-interpreter}
+\ section {Run the interpreter} \ label {basics / sect: starting-the-interpreter}
 
-Нам осталось показать только одну вещь: дверь в~наш новый мир.
+We have only one thing left to show: the door to our new world.
 
-\indexC{chapter1-scheme}
-\begin{code:lisp}
+\ indexC {chapter1-scheme}
+\ begin {code: lisp}
 (define (chapter1-scheme)
   (define (toplevel)
     (display (evaluate (read) env.global))
-    (toplevel) )
-  (toplevel) )
-\end{code:lisp}
+    (toplevel))
+  (toplevel))
+\ end {code: lisp}
 
-Поскольку наш интерпретатор ещё мал и неопытен, но подаёт большие надежды,
-предлагаем вам в~качестве упражнения написать функцию, позволяющую из него
-выйти.
+Since our interpreter is still small and inexperienced, but gives great hopes,
+we suggest that you write in an exercise as an option, allowing from it
+go out.
 
 
-\section{Заключение}\label{basics/sect:conclusions}
+\ section {Conclusion} \ label {basics / sect: conclusion}
 
-\indexR{язык!и смысл программ}
-Действительно~ли мы сейчас определили язык?
+\ indexR {language! and the meaning of programs}
+Have we really determined the language now?
 
-\indexR{смысл программ}
-\indexR{программы!смысл}
-Нет никаких сомнений в~том, что мы можем запустить \ic{evaluate}, передать ей
-выражение, и она вскоре вернёт результат вычислений. Но сама функция
-\ic{evaluate} не~имеет никакого смысла без языка своего определения, а если
-у~нас нет определения языка определения, то мы вообще ни~в~чём не~можем
-быть уверены. Так как каждый лиспер является дальним родственником барона
-Мюнхгаузена, то, наверное, будет достаточно взять в~качестве языка определения
-тот, который мы только что определили. Следовательно, у~нас есть язык~$L$,
-определённый функцией~\ic{evaluate}, написанной на языке~$L$. Такой язык
-является решением следующего уравнения относительно~$L$:
+\ indexR {meaning of programs}
+\ indexR {program! meaning}
+There is no doubt that we can run \ ic {evaluate}, pass it on
+expression, and it will soon return the result of the calculations. But the function itself
+\ ic {evaluate} does not make any sense without the language of its definition, and if
+we do not have a definition of the language of definition, then we can not do anything at all
+to be sure. Since each lisper is a distant relative of the baron
+Munchhausen, then, probably, it will suffice to take in the language of definition
+the one we just defined. Consequently, we have the language ~ $ L $ ,
+defined by the function ~ \ ic {evaluate}, written in the language ~ $ L $ . This language
+is a solution of the following equation with respect to ~ $ L $ :
 %
-\begin{equation*}
-  \forall\pi \in \Vset{Программы}\colon
-    L\text{\ic{(evaluate (quote $\pi$) env.global)}} \equiv L\pi
-\end{equation*}
+\ begin {equation *}
+  \ forall \ pi  \ in  \ Vset {Programs} \ colon
+    L \ text { \ ic {(evaluate (quote $ \ pi $ ) env.global)}} \ equiv L \ pi
+\ end {equation *}
 
-Исполнение любой программы~$\pi$, написанной на~$L$ (обозначается как~$L\pi$),
-должно вести себя так~же (то~есть давать тот~же результат или никогда
-не~завершаться), как и выражение~\ic{(evaluate (quote~$\pi$) env.global)} на
-том~же языке~$L$. Одним из занимательных следствий этого утверждения является
-то, что \ic{evaluate} способна\footnote{После того, как мы раскроем все
-используемые макросы и сокращения вроде \ic{let}, \ic{case}, \ic{define}
-{\itd} Потом надо будет ещё поместить в~глобальное окружение функции
-\ic{evaluate}, \ic{evlis} и~др.} проинтерпретировать сама себя. Следовательно,
-следующие выражения эквивалентны:
+Execution of any program ~ $ \ pi $ written in ~ $ L $ (denoted as ~ $ L \ pi $ ),
+should behave the same way (that ~ is to give the same result or never
+not ~ complete), like the expression ~ \ ic {(evaluate (quote ~ $ \ pi $ ) env.global)} on
+the same language ~ $ L $ . One of the interesting consequences of this statement is
+that \ ic {evaluate} is capable of \ footnote {After we've opened all
+used macros and abbreviations like \ ic {let}, \ ic {case}, \ ic {define}
+{ \ itd } Then we'll need to put the function in the global environment
+\ ic {evaluate}, \ ic {evlis} and ~ others} to interpret itself. Consequently,
+the following expressions are equivalent:
 
-\begin{code:lisp}
-(evaluate (quote |$\pi$|) env.global) |\eq|
-  |\eq| (evaluate (quote (evaluate (quote |$\pi$|) env.global)) env.global)
-\end{code:lisp}
+\ begin {code: lisp}
+(evaluate (quote | $ \ pi $ |) env.global) | \ eq |
+  | | \ eq | (evaluate (quote (evaluate (quote | $ \ pi $ |) env.global)) env.global)
+\ end {code: lisp}
 
-Есть~ли ещё решения приведённого уравнения? Да, и их великое множество! Как мы
-видели раньше, определение \ic{evaluate} вовсе не~обязательно указывает порядок
-вычислений. Множество других свойств языка, используемого для определения,
-бессознательно \emph{наследуются} определяемым языком. Мы, по~сути, ничего
-не~можем о~них сказать, но все эти варианты претендуют на решение указанного
-уравнения. Вместе с~многочисленными тривиальными решениями. Рассмотрим,
-к~примеру, язык~$L_{2001}$, любая программа на котором возвращает~$2001$. Даже
-такой язык удовлетворяет этому уравнению. Поэтому для определения настоящих
-языков необходимы другие методы, их мы рассмотрим в~следующих главах.
+Is there still a solution to the above equation? Yes, and there are a lot of them! Like us
+seen before, the definition of \ ic {evaluate} does not necessarily indicate order
+calculations. Many other properties of the language used to determine,
+unconsciously \ emph {inherited} by the specified language. We, in fact, nothing
+We can not say anything about them, but all these variants claim a solution to this
+equations. Together with numerous trivial solutions. Consider,
+for example, the language $ L_ {2001} $ , any program on which returns $ 2001 $ . Even
+such a language satisfies this equation. Therefore, to determine the present
+languages, other methods are needed, we will discuss them in the next chapters.
 
 
-\section{Упражнения}\label{basics/sect:exercises}
+\ section {Exercises} \ label {basics / sect: exercises}
 
-\begin{exercise}\label{basics/ex:tracer}
-\indexR{трассировка}
-Модифицируйте функцию \ic{evaluate} так, чтобы она стала трассировщиком. Все
-вызовы функций должны выводить на экран фактические аргументы и возвращаемый
-результат. Легко представить себе дальнейшее развитие этого инструмента
-в~пошаговый отладчик, вдобавок позволяющий изменять порядок выполнения
-отлаживаемой программы.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: tracer}
+\ indexR {trace}
+Modify the \ ic {evaluate} function so that it becomes a tracer. All
+function calls must display actual arguments and return
+result. It is easy to imagine the further development of this tool
+in a step-by-step debugger, in addition, allowing you to change the order of execution
+debugged program.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:excess-recursion}
-Если функции~\ic{evlis} передаётся список из одного выражения, она делает
-один лишний рекурсивный вызов. Придумайте способ, как избавиться от него.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: excess-recursion}
+If the function ~ \ ic {evlis} is passed a list of one expression, it does
+one extra recursive call. Think of a way to get rid of it.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:new-extend}
-Предположим, новая функция~\ic{extend} определена так:
+\ begin {exercise} \ label {basics / ex: new-extend}
+Suppose the new function ~ \ ic {extend} is defined as follows:
 
-\indexC{extend}
-\begin{code:lisp}
+\ indexC {extend}
+\ begin {code: lisp}
 (define (extend env names values)
-  (cons (cons names values) env) )
-\end{code:lisp}
+  (cons (cons names values) env))
+\ end {code: lisp}
 
-Определите соответствующие функции \ic{lookup} и \ic{update!}. Сравните их
-с~ранее рассмотренными.
-\end{exercise}
+Define the corresponding functions \ ic {lookup} and \ ic {update!}. Compare them
+with ~ previously considered.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:racks}
-\indexR{ближнее (shallow) связывание}
-\indexR{связывание!ближнее (shallow)}
-\indexE{rack}
-В~работе~\cite{ss80} предлагается другой механизм ближнего связывания, названный
-\term{rack}. Символ связывается с~полем, хранящим не~единственное значение, а
-стек значений. В~каждый момент времени значением переменной является находящаяся
-на вершине стека величина. Перепишите функции \ic{s.make-function},
-\ic{s.lookup} и~\ic{s.update!} для реализации этой идеи.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: racks}
+\ indexR {shallow} binding}
+\ indexR {close-up (shallow)}
+\ indexE {rack}
+In ~ ~ cite {ss80}, another short-range coupling mechanism is proposed, called
+\ term {rack}. The symbol is associated with a ~ field that does not store a single value, but
+a stack of values. At each time point, the value of the variable is the
+at the top of the stack value. Rewrite the functions \ ic {s.make-function},
+\ ic {s.lookup} and ~ \ ic {s.update!} to implement this idea.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:liar-liar!}
-\indexR{представление!логических значений}
-Если вы ещё не~заметили, то в~определение функции \ic{<} вкралась ошибка! Ведь
-эта функция должна возвращать логические значения определяемого языка, а
-не~определяющего. Исправьте это досадное недоразумение.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: liar-liar!}
+\ indexR {representation of boolean values}
+If you have not noticed yet, the error in the definition of the function \ ic {<} has crept in! After all
+This function must return the logical values ​​of the specified language, and
+not defining. Correct this unfortunate misunderstanding.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:def-list}
-Определите функцию~\ic{list}.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: def-list}
+Define the function ~ \ ic {list}.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:def-call/cc}
-Для обожающих продолжения: определите \ic{call/cc}.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: def-call / cc}
+For adoring sequels: define \ ic {call / cc}.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:def-apply}
-Определите функцию \ic{apply}.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: def-apply}
+Define the function \ ic {apply}.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:def-end}
-Определите функцию~\ic{end}, позволяющую выйти из интерпретатора, разработанного
-в~этой главе.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: def-end}
+Define the function ~ \ ic {end}, which allows to exit the interpreter, developed
+in this chapter.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:slowpoke}
-\indexR{уровни интерпретации}
-\indexR{интерпретация!уровневая}
-Сравните скорость Scheme и \ic{evaluate}. Затем сравните скорость \ic{evaluate}
-и \ic{evaluate}, интерпретируемой с~помощью \ic{evaluate}.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: slowpoke}
+\ indexR {levels of interpretation}
+\ indexR {interpretation! level}
+Compare the speed of Scheme and \ ic {evaluate}. Then compare the speed of \ ic {evaluate}
+and \ ic {evaluate}, interpreted using \ ic {evaluate}.
+\ end {exercise}
 
-\begin{exercise}\label{basics/ex:no-gensym}
-Ранее мы смогли успешно определить \ic{begin} через \ic{lambda}
-\seePage[basics/forms/sequence/par:gensym-puzzle], но для этого нам
-потребовалось использовать функцию \ic{gensym}, чтобы избежать коллизий имён
-переменных. Переопределите \ic{begin} в~таком же духе, но без использования
-\ic{gensym}.
-\end{exercise}
+\ begin {exercise} \ label {basics / ex: no-gensym}
+Previously, we were able to successfully determine \ ic {begin} through \ ic {lambda}
+\ seePage [basics / forms / sequence / par: gensym-puzzle], but for this we
+It was necessary to use the function \ ic {gensym} to avoid collisions of names
+variables. Override \ ic {begin} in the same spirit, but without using
+\ ic {gensym}.
+\ end {exercise}
 
 
-\section*{Рекомендуемая литература}
+\ section * {References}
 
-Все работы по интерпретаторам, приведённые в~начале этой главы, являются
-довольно интересными, но если вы не~можете столько читать, то вот наиболее
-стоящие из них:
-\begin{itemize}
-  \item среди <<$\lambda$"~papers>>:~\cite{ss78a};
+All the works on interpreters, given in the beginning of this chapter, are
+quite interesting, but if you can not ~ read so much, then here's the most
+standing out of them:
+\ begin {itemize}
+  \ item among the << $ \ lambda $ "~ papers >>: ~ \ cite {ss78a};
 
-  \item самая короткая в~мире статья, которая содержит полный интерпретатор
-        Лиспа:~\cite{mcc78b};
+  \ item is the shortest article in the world that contains the full interpreter
+        Lisp: ~ \ cite {mcc78b};
 
-  \item <<нестрого формальное>> описание интерпретации:~\cite{rey72};
+  \ item << not strictly formal >> description of interpretation: ~ \ cite {rey72};
 
-  \item местная книга Бытия:~\cite{mae+62}.
-\end{itemize}
+  \ item The local book of Genesis: ~ \ cite {mae + 62}.
+\ end {itemize}
