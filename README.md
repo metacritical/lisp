@@ -1,97 +1,97 @@
-Интерпретация Лиспа и Scheme
-============================
+Interpretation of Lisp and scheme
+=================================
 
-Это перевод на русский язык «широко известной в узких кругах» книги Кристиана Кеннека «Les Langages Lisp» (aka _Lisp in Small Pieces_). Книга затрагивает основы построения интерпретаторов и компиляторов Лиспа (в первую очередь его диалекта Scheme), а также разнообразие вариантов понимания семантики его конструкций и возможностей вроде окружений, замыканий, исключений, продолжений, рефлексии и макросов.
+This is the translation into Russian of the widely known in narrow circles Christian Kennek's book "Les Langages Lisp" (aka Lisp in Small Pieces ). The book deals with the basics of constructing Lisp interpreter and compilers (primarily its Scheme dialect), as well as a variety of options for understanding the semantics of its constructs and possibilities like environments, closures, exceptions, continuations, reflections and macros.
 
-
-Готовые сборки
---------------
-
-В гитхабовских релизах доступны предварительно собранные варианты:
-  * lisp_a4.pdf — PDF под формат A4;
-  * lisp-*pt.epub — reflowable EPUB с соответствующим размером шрифта.
-
-На [Github Pages](http://ilammy.github.io/lisp/) хостится web-based версия.
-
-
-Что где валяется
+Ready assemblies
 ----------------
 
-| Файл              | Содержимое                                              |
-|-------------------|---------------------------------------------------------|
-| `build.*`         | билд-скрипты                                            |
-| `makeindex.py`    | скрипт, формирующий предметный указатель                |
-| `book-src/`       | исходный текст книги; содержимое файлов самоочевидно    |
-| `epub/`           | исходный текст книги, структура EPUB-контейнера, шрифты |
-| `epub/fontconfig` | CSS с настройками для разных базовых размеров шрифта    |
-| `scm-src/`        | копия исходных текстов программ, прилагаемых к книге    |
+In the Gythkhab releases, pre-assembled versions are available:
+
+  * lisp_a4.pdf - PDF for A4 format;
+  * lisp- * pt.epub - reflowable EPUB with the appropriate font size.
+
+On [Github Pages](http://ilammy.github.io/lisp/) hosted web-based version.
 
 
-Сборка
-------
+What is lying around
+--------------------
 
-Для сборки необходимы pdfLaTeX и Python 2.7. Запускаете из корневой директории простенький скрипт `build.sh` или `build.bat` и ждёте, пока LaTeX сделает три прохода по тексту. Забираете `lisp.pdf` из корневой директории.
+| File              | Content                                                                    |
+|-------------------|----------------------------------------------------------------------------|
+| `build.*`         | build scripts                                                              |
+| `makeindex.py`    | script that forms an index                                                 |
+| `book-src/`       | the source text of the book; the contents of the files are self-evident    |
+| `epub/`           | the source text of the book, the structure of the EPUB container, fonts    |
+| `epub/fontconfig` | CSS with settings for different basic font sizes                           |
+| `scm-src/`        | copy of the source code of the programs attached to the book               |
 
-Python необходим для генерации предметного указателя. Обеспечьте, пожалуйста, запускаемость интерпретатора по команде `python`.
 
-Скрипты не устанавливают необходимые LaTeX-пакеты. Ожидается, что они или уже доступны, или что ваш дистрибутив LaTeX автоматически их выкачает из CTAN при сборке документа.
+Assembly
+--------
 
-Сборка проверена в Debian 7.0 (TeX Live) и Windows (MiKTeX 2.9). Для Windows необходимо установить MiKTeX, установить для него CM-Super и PSCyr (0.4d-beta9), остальное выкачивается автоматически. Для Debian достаточно сделать
+For assembly, pdfLaTeX and Python 2.7 are required. Run a simple script from the root directory `build.sh` or `build.bat` wait until LaTeX makes three passes through the text. Take it `lisp.pdf` from the root directory.
+
+Python is needed to generate the index. Provide, please, the launch of the interpreter on command `python`.
+
+Scripts do not install the necessary LaTeX packages. It is expected that they are either already available, or that your LaTeX distribution will automatically download them from CTAN when assembling the document.
+
+The assembly was tested in Debian 7.0 (TeX Live) and Windows (MiKTeX 2.9). For Windows, you need to install MiKTeX, install CM-Super and PSCyr (0.4d-beta9) for it, the rest is automatically unloaded. For Debian, it's enough to do
 
     sudo aptitude install cm-super texlive-lang-english texlive-lang-french \
         texlive-lang-cyrillic texlive-latex-base texlive-latex-recommended  \
         texlive-latex-extra texlive-pictures
 
-И установить PSCyr вручную.
+And install PSCyr manually.
 
-Шрифты из пакета PSCyr используются только для буквиц и титульной страницы, так что при желании от этой зависимости можно легко избавиться без значительного ущерба для качества. Если желания нет, то удачи с установкой:
-  * исходники PSCyr: ftp://scon155.phys.msu.su/pub/russian/psfonts/0.4d-beta
-  * deb-пакет: http://people.debian.org/~sgolovan/debian/pool/main/tex/tex-pscyr
-  * установщиков под Винду я не видел, сам их писать и пакеты для LaTeX делать не умею :(
+Fonts from the PSCyr package are used only for letters and the title page, so if desired, this dependence can be easily disposed of without significant damage to quality. If there is no desire, then good luck with the installation:
+  * PSCyr sources: ftp://scon155.phys.msu.su/pub/russian/psfonts/0.4d-beta
+  * deb package: http://people.debian.org/~sgolovan/debian/pool/main/tex/tex-pscyr
+  * installers for Windows I did not see, I write them myself and packages for LaTeX do not know how :(
 
-### Сборка EPUB
+### Build EPUB
 
-Для этого дополнительно потребуются Imagemagick и Ghostscript (для конвертации иллюстраций в PNG), и Info-ZIP (для упаковки результата в EPUB-контейнер). Для сборки вызывайте скрипты с опцией `epub`. Забираете пачечку `lisp-*pt.epub` из корневой директории.
+To do this, Imagemagick and Ghostscript (for converting illustrations into PNG), and Info-ZIP (for packing the result into the EPUB container) are additionally required. For the assembly, call the scripts with the option `epub`. Take the pacha `lisp-*pt.epub` from the root directory.
 
-Конвертилка Imagemagick должна быть доступна по команде `convert`. Info-ZIP — по команде `zip`.
+The Imagemagick converter must be available on command `convert`. Info-ZIP - by command `zip`.
 
-Сборка проверена в Debian 7.0 (Imagemagick 6.7.7, Ghostscript 9.05, Info-ZIP 3.0) и Windows (Imagemagick 6.8.7, Ghostscript 9.10, Info-ZIP 3.0).
+The assembly was tested in Debian 7.0 (Imagemagick 6.7.7, Ghostscript 9.05, Info-ZIP 3.0) and Windows (Imagemagick 6.8.7, Ghostscript 9.10, Info-ZIP 3.0).
 
 
 ----
 
 
-### Контакты
+### Contacts
 
-Домашняя страница профессора Кеннека ([клац](http://pagesperso-systeme.lip6.fr/Christian.Queinnec/WWW/Queinnec.html)), его электронный адрес: [Christian.Queinnec@lip6.fr](mailto:Christian.Queinnec@lip6.fr)
+The home page of Professor Kennek ([klac](http://pagesperso-systeme.lip6.fr/Christian.Queinnec/WWW/Queinnec.html)), his e-mail address: [Christian.Queinnec@lip6.fr](mailto:Christian.Queinnec@lip6.fr)
 
-Оригинал исходных кодов из `scm-src` можно скачать одним архивом [отсюда](http://pagesperso-systeme.lip6.fr/Christian.Queinnec/Books/LiSP-2ndEdition-2006Dec11.tgz).
+You `scm-src` can download the original source code from one archive [from here](http://pagesperso-systeme.lip6.fr/Christian.Queinnec/Books/LiSP-2ndEdition-2006Dec11.tgz).
 
-Если вас смущает GitHub или вы не способны отыскать в Гугле мой личный имейл и домашний адрес, то можете слать жалобы, угрозы и предложения сюда: [lisp.in.small.pieces@gmail.com](mailto:lisp.in.small.pieces@gmail.com)
+If you are confused by GitHub or you are not able to find my personal email address and home address in Google, you can send complaints, threats and suggestions here: [lisp.in.small.pieces@gmail.com](mailto:lisp.in.small.pieces@gmail.com)
 
 
-### Лицензирование и прочая шушера
+### Licensing and other riffraff
 
-По соглашению с автором книги, данный перевод распространяется под лицензией [**CC BY-ND 3.0**](http://creativecommons.org/licenses/by-nd/3.0) (см. файл `LICENSE` с копией).
+By agreement with the author of the book, this translation is distributed under the license [**CC BY-ND 3.0**](http://creativecommons.org/licenses/by-nd/3.0) (see the file  `LICENSE` with a copy).
 
-Таким образом, вы можете свободно:
+So you can freely:
 
-  * *делиться* — копировать, распространять и передавать другим лицам данное произведение;
+  * share , copy, distribute and share this work with others;;
 
-  * использовать произведение в коммерческих целях.
+  * use the work for commercial purposes.
 
-При обязательном соблюдении следующих условий:
+With the obligatory observance of the following conditions:
 
-  * «Атрибуция» — вы должны атрибутировать произведение, указав любым удобным образом название книги, имя автора (Кристиан Кеннек, Christian Queinnec), имя переводчика (ilammy), а также дав ссылку на этот репозиторий: [https://github.com/ilammy/lisp](https://github.com/ilammy/lisp).
+  * "Attribution" — you must attribute the work, specifying in any convenient way the title of the book, the name of the author (Christian Kennek, Christian Queinnec), the name of the translator (ilammy), and also giving a link to this repository: [https://github.com/ilammy/lisp](https://github.com/ilammy/lisp).
 
-  * «Без производных произведений» — вы не можете изменять, преобразовывать или брать за основу это произведение.
+  * "Without derivative works" — you can not change, transform or take as a basis this work.
 
-Пользуясь правом уточнения лицензии, лично я *не считаю производными работами* форки с целью исправления орфографических, пунктуационных ошибок, факапов в формулах и исходных кодах, а также иных внешних недочётов, не влияющих на смысловое наполнение. И этим даю своё разрешение (и даже поощряю их создание) при условии оформления соответствующих пулл-реквестов.
+Using the right to clarify the license, I personally do not consider foreknowledge works as the basis for correcting spelling, punctuation errors, fakapov in formulas and source codes, as well as other external flaws that do not affect the semantic content. And by this I give my permission (and even encourage their creation), provided that the relevant call-records are issued.
 
-Естественно, производными работами также не считается перевод LaTeX-исходников в другой формат, перевёрстка, перерисовка иллюстраций и любые оформительские изменения, необходимые для адекватной передачи содержимого книги на другом носителе.
+Naturally, derivative works also do not consider the translation of LaTeX sources into another format, reworking, repainting of illustrations and any design changes necessary to adequately transfer the contents of the book to another medium.
 
-За разрешением на всё прочее (сокращение, перевод, создание комиксов по мотивам и т. п.), пожалуйста, обращайтесь к автору книги; он не кусается, его имейл чуть выше. Лично я не против любого использования, но я не вправе это решать самостоятельно.
+For permission to do anything else (shortening, translation, creating comic books based on motives, etc.), please contact the author of the book; he does not bite, his email is a little higher. Personally, I'm not against any use, but I do not have the right to decide this myself.
 
-Также CC BY-ND распространяется исключительно на содержимое книги: текст и иллюстрации, а также на файлик с текстом лицензии. LaTeX-макросы сами по себе, `makeindex.py` и всё остальное, не имеющее непосредственного отношения к контенту книги, распространяется на условиях [WTFPL](http://www.wtfpl.net/) (читай: находится в общественном достоянии).
+CC BY-ND also applies exclusively to the contents of the book: text and illustrations, as well as a file with the text of the license. LaTeX macros are by themselves, `makeindex.py` and everything else that does not directly relate to the content of the book is distributed on [WTFPL](http://www.wtfpl.net/) terms (read: it is in the public domain).
 
-Исходные коды программ, находящихся в `scm-src` и приведённых в тексте книги, распространяются на условиях, описанных в `scm-src/README`. Директория `scm-src` является зеркалом [оригинальных исходников](http://pagesperso-systeme.lip6.fr/Christian.Queinnec/Books/LiSP-2ndEdition-2006Dec11.tgz), сделанныи исключительно ради удобства. Никаких изменений в него не вносилось.
+The source codes of the programs that are in `scm-src` and given in the text of the book are subject to the conditions described in `scm-src/README`. The directory `scm-src` is a mirror of the [original sources](http://pagesperso-systeme.lip6.fr/Christian.Queinnec/Books/LiSP-2ndEdition-2006Dec11.tgz), made solely for the sake of convenience. No changes were made to it.
